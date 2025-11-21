@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h2>Admin Panel · Sofia Ops</h2>
+      <p class="muted">This interface is temporary. No password configured yet.</p>
+
+      <p><strong>Database file:</strong> <%= dbPath %></p>
+      <form action="/download-db" method="GET" class="form inline">
+        <label>File name
+          <input type="text" name="file" value="users.db" />
+        </label>
+        <button class="btn" type="submit">Download DB</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h3>Client roster</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Password</th>
+            <th>Card last4</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(user => { %>
+            <tr>
+              <td><%= user.name %></td>
+              <td><%= user.email %></td>
+              <td><%= user.phone %></td>
+              <td><%= user.password %></td>
+              <td><%= user.credit_card_last4 %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

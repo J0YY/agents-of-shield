@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Dashboard</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="card">
+    <h2>Hey <%= user.name %>!</h2>
+    <p class="muted">Your appointment concierge will text you soon.</p>
+
+    <ul class="details">
+      <li><strong>Email:</strong> <%= user.email %></li>
+      <li><strong>Phone:</strong> <%= user.phone %></li>
+      <li><strong>Password hint:</strong> <%= user.password %></li>
+      <li><strong>Card on file:</strong> **** **** **** <%= user.credit_card_last4 %></li>
+    </ul>
+
+    <a class="btn" href="/admin">Go to admin portal</a>
+  </main>
+</body>
+</html>

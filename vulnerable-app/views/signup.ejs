@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join Sofia's Groom Club</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <main class="card">
+    <h2>Create your client profile</h2>
+    <form action="/signup" method="POST" class="form">
+      <label>Name
+        <input type="text" name="name" required />
+      </label>
+      <label>Email
+        <input type="email" name="email" required />
+      </label>
+      <label>Phone
+        <input type="text" name="phone" placeholder="555-123-4567" />
+      </label>
+      <label>Password
+        <input type="text" name="password" placeholder="use something easy" />
+      </label>
+      <label>Card on file
+        <input type="text" name="cardNumber" placeholder="4242 4242 4242 4242" />
+      </label>
+      <button class="btn primary" type="submit">Save &amp; Continue</button>
+    </form>
+    <p class="muted">Already booked before? <a href="/login">Login</a></p>
+  </main>
+</body>
+</html>
