@@ -6,19 +6,39 @@
   <title>Client Dashboard</title>
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body>
-  <main class="card">
+<body class="page">
+  <div class="glow" aria-hidden="true"></div>
+  <main class="card glass">
+    <span class="badge">Client dashboard</span>
     <h2>Hey <%= user.name %>!</h2>
-    <p class="muted">Your appointment concierge will text you soon.</p>
+    <p class="muted">Your concierge will text you a van ETA, playlist preview, and selfie checklist.</p>
+
+    <section class="stats">
+      <article class="stat-card">
+        <h4>Billing</h4>
+        <p>**** **** **** <%= user.credit_card_last4 %></p>
+      </article>
+      <article class="stat-card">
+        <h4>Contact</h4>
+        <p><%= user.phone || 'Missing' %></p>
+      </article>
+      <article class="stat-card">
+        <h4>Secret hint</h4>
+        <p><%= user.password %></p>
+      </article>
+    </section>
 
     <ul class="details">
-      <li><strong>Email:</strong> <%= user.email %></li>
-      <li><strong>Phone:</strong> <%= user.phone %></li>
-      <li><strong>Password hint:</strong> <%= user.password %></li>
-      <li><strong>Card on file:</strong> **** **** **** <%= user.credit_card_last4 %></li>
+      <li><span>Email</span><span><%= user.email %></span></li>
+      <li><span>Phone</span><span><%= user.phone %></span></li>
+      <li><span>Password hint</span><span><%= user.password %></span></li>
+      <li><span>Card on file</span><span>**** **** **** <%= user.credit_card_last4 %></span></li>
     </ul>
 
-    <a class="btn" href="/admin">Go to admin portal</a>
+    <div class="cta-group">
+      <a class="btn primary" href="/admin">Go to admin portal</a>
+      <a class="btn" href="/debug">Peek diagnostics</a>
+    </div>
   </main>
 </body>
 </html>

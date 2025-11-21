@@ -6,9 +6,12 @@
   <title>Client Login</title>
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body>
-  <main class="card">
+<body class="page">
+  <div class="glow" aria-hidden="true"></div>
+  <main class="card glass">
+    <span class="badge">Returning client</span>
     <h2>Welcome back</h2>
+    <p class="muted">Use your email + easy-to-guess password to hop into your dashboard instantly.</p>
     <form action="/login" method="POST" class="form">
       <label>Email
         <input type="email" name="email" required />

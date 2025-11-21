@@ -6,28 +6,42 @@
   <title>Join Sofia's Groom Club</title>
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body>
-  <main class="card">
-    <h2>Create your client profile</h2>
-    <form action="/signup" method="POST" class="form">
-      <label>Name
-        <input type="text" name="name" required />
-      </label>
-      <label>Email
-        <input type="email" name="email" required />
-      </label>
-      <label>Phone
-        <input type="text" name="phone" placeholder="555-123-4567" />
-      </label>
-      <label>Password
-        <input type="text" name="password" placeholder="use something easy" />
-      </label>
-      <label>Card on file
-        <input type="text" name="cardNumber" placeholder="4242 4242 4242 4242" />
-      </label>
-      <button class="btn primary" type="submit">Save &amp; Continue</button>
-    </form>
-    <p class="muted">Already booked before? <a href="/login">Login</a></p>
-  </main>
+<body class="page">
+  <div class="glow" aria-hidden="true"></div>
+  <section class="auth-shell">
+    <aside>
+      <span class="badge">Groom Club Access</span>
+      <h2>Reserve your fluff slot</h2>
+      <p class="muted">One form unlocks concierge texting, van tracking, tipping tools, and secret glitter drops.</p>
+      <ul class="details">
+        <li><span>Instant scheduling</span><span>✨</span></li>
+        <li><span>Card on file</span><span>4242</span></li>
+        <li><span>VIP treat tracking</span><span>🍬</span></li>
+      </ul>
+    </aside>
+
+    <main class="card glass">
+      <h2>Create your client profile</h2>
+      <form action="/signup" method="POST" class="form">
+        <label>Name
+          <input type="text" name="name" required />
+        </label>
+        <label>Email
+          <input type="email" name="email" required />
+        </label>
+        <label>Phone
+          <input type="text" name="phone" placeholder="555-123-4567" />
+        </label>
+        <label>Password
+          <input type="text" name="password" placeholder="use something easy" />
+        </label>
+        <label>Card on file
+          <input type="text" name="cardNumber" placeholder="4242 4242 4242 4242" />
+        </label>
+        <button class="btn primary" type="submit">Save &amp; Continue</button>
+      </form>
+      <p class="muted">Already booked before? <a href="/login">Login</a></p>
+    </main>
+  </section>
 </body>
 </html>

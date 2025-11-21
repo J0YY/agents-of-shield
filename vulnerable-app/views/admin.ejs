@@ -6,22 +6,31 @@
   <title>Admin Panel</title>
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body>
+<body class="page">
+  <div class="glow" aria-hidden="true"></div>
   <main>
-    <section class="card">
-      <h2>Admin Panel · Sofia Ops</h2>
-      <p class="muted">This interface is temporary. No password configured yet.</p>
+    <section class="card glass">
+      <span class="badge">Admin · Sofia Ops</span>
+      <h2>Operations dashboard</h2>
+      <p class="muted">This interface is temporary. No password configured yet. Please don't tell compliance.</p>
 
-      <p><strong>Database file:</strong> <%= dbPath %></p>
+      <div class="details">
+        <div><strong>Database file</strong><span><%= dbPath %></span></div>
+      </div>
+
       <form action="/download-db" method="GET" class="form inline">
         <label>File name
           <input type="text" name="file" value="users.db" />
         </label>
-        <button class="btn" type="submit">Download DB</button>
+        <button class="btn primary" type="submit">Download DB</button>
       </form>
+
+      <div class="muted" style="margin-top: 1rem;">
+        Need backups? Try <a href="/backup-db">/backup-db</a> or peek <a href="/config-prod">config</a>.
+      </div>
     </section>
 
-    <section class="card">
+    <section class="table-card">
       <h3>Client roster</h3>
       <table>
         <thead>
