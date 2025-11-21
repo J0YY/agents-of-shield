@@ -205,6 +205,10 @@ app.get('/config-prod', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Pet Grooming by Sofia listening on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Pet Grooming by Sofia listening on port ${PORT}`);
+  });
+}
+
+module.exports = app;
