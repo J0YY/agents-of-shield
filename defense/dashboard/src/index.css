@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -149,6 +149,387 @@ body {
 @media (min-width: 1024px) {
   .hero-grid {
     grid-template-columns: 3fr 2fr;
+  }
+}
+
+.scan-visor {
+  position: relative;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 24px;
+  background: radial-gradient(circle at 10% 20%, rgba(157, 139, 255, 0.25), transparent 60%),
+    radial-gradient(circle at 80% 10%, rgba(130, 245, 255, 0.2), transparent 55%),
+    rgba(7, 8, 32, 0.85);
+  overflow: hidden;
+}
+
+.scan-visor::before,
+.scan-visor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scan-visor::before {
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.08), transparent 60%);
+  animation: scanShimmer 4s linear infinite;
+}
+
+.scan-visor::after {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mix-blend-mode: soft-light;
+}
+
+.scan-visor-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  z-index: 1;
+}
+
+@media (min-width: 768px) {
+  .scan-visor-grid {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.scan-radar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-grid {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 65%);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.radar-grid::before,
+.radar-grid::after {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.radar-grid::after {
+  inset: 48px;
+}
+
+.radar-beam {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, rgba(130, 245, 255, 0.35), transparent 60%);
+  animation: beamSweep 6s linear infinite;
+}
+
+.radar-pulse {
+  position: absolute;
+  inset: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(130, 245, 255, 0.35);
+  animation: radarPulse 2.8s ease-out infinite;
+}
+
+.radar-label {
+  position: absolute;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.radar-label.top-left {
+  top: 12px;
+  left: 12px;
+}
+
+.radar-label.top-right {
+  top: 12px;
+  right: 12px;
+}
+
+.radar-label.bottom-left {
+  bottom: 12px;
+  left: 12px;
+}
+
+.radar-label.bottom-right {
+  bottom: 12px;
+  right: 12px;
+}
+
+.scan-percent {
+  text-align: center;
+}
+
+.scan-feed {
+  flex: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.scan-terminal {
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(3, 4, 20, 0.85);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+  padding: 16px 18px;
+  min-height: 180px;
+}
+
+.scan-terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.scan-terminal-body {
+  font-family: "Space Mono", "Space Grotesk", monospace;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.8);
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.terminal-line {
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.terminal-line:last-child {
+  border-bottom: none;
+}
+
+.terminal-timestamp {
+  color: rgba(255, 255, 255, 0.4);
+  min-width: 110px;
+  font-variant-numeric: tabular-nums;
+}
+
+.terminal-message {
+  flex: 1;
+}
+
+.terminal-line.level-warn {
+  color: #ffd29d;
+}
+
+.terminal-line.level-success {
+  color: #82f5ff;
+}
+
+.scan-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scan-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.scan-progress-thumb {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #82f5ff, #ff89a4);
+  transition: width 0.6s ease;
+}
+
+.scan-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scan-step {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+.scan-step--done {
+  border-color: rgba(130, 245, 255, 0.4);
+  transform: translateX(4px);
+  box-shadow: 0 0 18px rgba(130, 245, 255, 0.1);
+}
+
+.scan-step-index {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.server-card {
+  border-radius: 22px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+}
+
+.service-issues {
+  margin-top: 10px;
+  padding-left: 1.25rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+}
+
+.service-issues li {
+  list-style: square;
+  margin-bottom: 2px;
+}
+
+.decoy-chip {
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.honeypot-card {
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.honeypot-card:hover {
+  border-color: rgba(130, 245, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.honeypot-card.is-active {
+  border-color: rgba(255, 137, 164, 0.7);
+  box-shadow: 0 12px 35px rgba(255, 137, 164, 0.25);
+  background: linear-gradient(135deg, rgba(255, 137, 164, 0.15), rgba(130, 245, 255, 0.08));
+}
+
+.honeypot-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.recommend-pill {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  background: rgba(130, 245, 255, 0.2);
+  border: 1px solid rgba(130, 245, 255, 0.4);
+  border-radius: 999px;
+  padding: 2px 8px;
+  animation: chipPulse 2.2s ease-in-out infinite;
+}
+
+.honeypot-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px;
+  background: rgba(7, 8, 32, 0.8);
+}
+
+.honeypot-cta-button {
+  border-radius: 999px;
+  padding: 10px 20px;
+  border: none;
+  background: linear-gradient(135deg, #ff89a4, #9d8bff);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: opacity 0.2s ease;
+}
+
+.honeypot-cta-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@keyframes scanShimmer {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(50%);
+  }
+}
+
+@keyframes beamSweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes chipPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(130, 245, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(130, 245, 255, 0.8);
   }
 }
 
