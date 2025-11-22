@@ -2,3 +2,5 @@ pip install openai-agents
 pip install "mcp[cli]"
 export OPENAI_API_KEY="sk-FILL_ME_IN"
 npm install -g javascript-obfuscator
+npm install -g html-minifier-terser
+npm install -g csso-cli

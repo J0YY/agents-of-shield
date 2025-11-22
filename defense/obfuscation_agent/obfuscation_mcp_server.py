@@ -6,15 +6,14 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
+from pydantic import BaseModel
 
 mcp = FastMCP(
     "JsObfuscatorServer",
     json_response=True,
 )
 
-
-# Directories we never traverse (they are copied as-is if needed,
-# but in practice you usually won't even point source_dir at them).
+# Directories we never traverse when processing source trees
 EXCLUDED_DIRS = {
     "node_modules",
     ".git",
@@ -32,10 +31,52 @@ def _is_js_file(path: Path) -> bool:
     Return True if the file is a JavaScript source file we want to obfuscate.
 
     Keep this conservative: .js and .jsx only.
-    If you want .mjs/.cjs later, you can add them explicitly once
-    you know your obfuscator setup handles them correctly.
     """
     return path.suffix.lower() in {".js", ".jsx"}
+
+
+def _is_html_file(path: Path) -> bool:
+    return path.suffix.lower() in {".html", ".htm", ".ejs"}
+
+
+def _is_css_file(path: Path) -> bool:
+    return path.suffix.lower() == ".css"
+
+
+def _ensure_dir(path: Path, stats: Dict[str, int]) -> None:
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
+        stats["dirs_created"] += 1
+
+
+# ---------- Result models --------------------------------------------------
+
+
+class ObfuscateDirectoryResult(BaseModel):
+    files_obfuscated: int
+    files_copied: int
+    dirs_created: int
+    source_dir: str
+    output_dir: str
+
+
+class MinifyHtmlDirectoryResult(BaseModel):
+    files_minified: int
+    files_copied: int
+    dirs_created: int
+    source_dir: str
+    output_dir: str
+
+
+class MinifyCssDirectoryResult(BaseModel):
+    files_minified: int
+    files_copied: int
+    dirs_created: int
+    source_dir: str
+    output_dir: str
+
+
+# ---------- Tools ----------------------------------------------------------
 
 
 @mcp.tool()
@@ -44,15 +85,17 @@ def obfuscate_directory(
     output_dir: str,
     obfuscator_cmd: str = "javascript-obfuscator",
     extra_args: Optional[List[str]] = None,
-) -> Dict[str, int]:
+) -> ObfuscateDirectoryResult:
     """
     Recursively copy source_dir to output_dir, obfuscating JavaScript files.
 
-    - Skips common dependency / VCS / build directories such as:
+    - Skips common dependency / VCS / build directories:
       node_modules, .git, dist, build, etc.
     - Files with extensions .js or .jsx are obfuscated using the
       `javascript-obfuscator` CLI.
-    - All other files are copied as-is.
+    - All other files are copied as-is, but will not overwrite existing files
+      in output_dir. This allows other tools (HTML/CSS minifiers) to safely
+      run over the same output_dir without clobbering each other's results.
     - Requires `javascript-obfuscator` CLI to be installed and on PATH
       (e.g. `npm install -g javascript-obfuscator`).
 
@@ -80,9 +123,7 @@ def obfuscate_directory(
         # Filter out dirs we don't want to traverse (node_modules, .git, dist, build, etc.)
         dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
 
-        if not dst_root_dir.exists():
-            dst_root_dir.mkdir(parents=True, exist_ok=True)
-            stats["dirs_created"] += 1
+        _ensure_dir(dst_root_dir, stats)
 
         for filename in files:
             src_path = root_path / filename
@@ -113,15 +154,215 @@ def obfuscate_directory(
 
                 stats["files_obfuscated"] += 1
             else:
-                shutil.copy2(src_path, dst_path)
-                stats["files_copied"] += 1
+                # Copy non-JS files only if they don't already exist in output_dir
+                if not dst_path.exists():
+                    shutil.copy2(src_path, dst_path)
+                    stats["files_copied"] += 1
 
-    # Attach resolved paths as strings for the agent to report
-    return {
-        **stats,
-        "source_dir": str(src_root),
-        "output_dir": str(dst_root),
+    return ObfuscateDirectoryResult(
+        files_obfuscated=stats["files_obfuscated"],
+        files_copied=stats["files_copied"],
+        dirs_created=stats["dirs_created"],
+        source_dir=str(src_root),
+        output_dir=str(dst_root),
+    )
+
+
+@mcp.tool()
+def minify_html_directory(
+    source_dir: str,
+    output_dir: str,
+    html_minifier_cmd: str = "html-minifier-terser",
+    extra_args: Optional[List[str]] = None,
+) -> MinifyHtmlDirectoryResult:
+    """
+    Recursively copy source_dir to output_dir, minifying .html/.htm files.
+
+    - Skips common dependency / VCS / build directories (EXCLUDED_DIRS).
+    - Files with .html/.htm extensions are minified using the
+      `html-minifier-terser` CLI.
+      Default options:
+        --collapse-whitespace
+        --remove-comments
+        --remove-optional-tags
+        --minify-js true
+        --minify-css true
+      These can be augmented via extra_args.
+    - All other files are copied as-is, but will not overwrite existing files
+      in output_dir.
+
+    Requires `html-minifier-terser` CLI on PATH
+    (e.g. `npm install -g html-minifier-terser`).
+
+    Returns statistics and resolved paths.
+    """
+    src_root = Path(source_dir).expanduser().resolve()
+    dst_root = Path(output_dir).expanduser().resolve()
+
+    if not src_root.exists() or not src_root.is_dir():
+        raise ValueError(f"source_dir does not exist or is not a directory: {src_root}")
+
+    dst_root.mkdir(parents=True, exist_ok=True)
+
+    stats: Dict[str, int] = {
+        "files_minified": 0,
+        "files_copied": 0,
+        "dirs_created": 0,
     }
+
+    # Default options (can be extended by extra_args)
+    args: List[str] = [
+        "--collapse-whitespace",
+        "--remove-comments",
+        "--remove-optional-tags",
+        "--minify-js",
+        "true",
+        "--minify-css",
+        "true",
+    ]
+    if extra_args:
+        args.extend(extra_args)
+
+    for root, dirs, files in os.walk(src_root):
+        root_path = Path(root)
+        rel_root = root_path.relative_to(src_root)
+        dst_root_dir = dst_root / rel_root
+
+        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
+
+        _ensure_dir(dst_root_dir, stats)
+
+        for filename in files:
+            src_path = root_path / filename
+            dst_path = dst_root_dir / filename
+
+            if _is_html_file(src_path):
+                cmd: List[str] = [
+                    html_minifier_cmd,
+                    str(src_path),
+                    "-o",
+                    str(dst_path),
+                ]
+                cmd.extend(args)
+
+                proc = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+
+                if proc.returncode != 0:
+                    raise RuntimeError(
+                        f"HTML minifier failed for {src_path} with exit code "
+                        f"{proc.returncode}.\nSTDERR:\n{proc.stderr}"
+                    )
+
+                stats["files_minified"] += 1
+            else:
+                # Copy non-HTML files only if they don't already exist in output_dir
+                if not dst_path.exists():
+                    shutil.copy2(src_path, dst_path)
+                    stats["files_copied"] += 1
+
+    return MinifyHtmlDirectoryResult(
+        files_minified=stats["files_minified"],
+        files_copied=stats["files_copied"],
+        dirs_created=stats["dirs_created"],
+        source_dir=str(src_root),
+        output_dir=str(dst_root),
+    )
+
+
+@mcp.tool()
+def minify_css_directory(
+    source_dir: str,
+    output_dir: str,
+    css_minifier_cmd: str = "csso",
+    extra_args: Optional[List[str]] = None,
+) -> MinifyCssDirectoryResult:
+    """
+    Recursively copy source_dir to output_dir, minifying .css files.
+
+    - Skips common dependency / VCS / build directories (EXCLUDED_DIRS).
+    - Files with .css extension are minified using the `csso` CLI
+      (installed via `csso-cli`).
+      Typical usage is `csso input.css -o output.css`.
+    - All other files are copied as-is, but will not overwrite existing files
+      in output_dir.
+
+    Requires `csso` CLI on PATH
+    (e.g. `npm install -g csso-cli`).
+
+    Returns statistics and resolved paths.
+    """
+    src_root = Path(source_dir).expanduser().resolve()
+    dst_root = Path(output_dir).expanduser().resolve()
+
+    if not src_root.exists() or not src_root.is_dir():
+        raise ValueError(f"source_dir does not exist or is not a directory: {src_root}")
+
+    dst_root.mkdir(parents=True, exist_ok=True)
+
+    stats: Dict[str, int] = {
+        "files_minified": 0,
+        "files_copied": 0,
+        "dirs_created": 0,
+    }
+
+    args: List[str] = []
+    if extra_args:
+        args.extend(extra_args)
+
+    for root, dirs, files in os.walk(src_root):
+        root_path = Path(root)
+        rel_root = root_path.relative_to(src_root)
+        dst_root_dir = dst_root / rel_root
+
+        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
+
+        _ensure_dir(dst_root_dir, stats)
+
+        for filename in files:
+            src_path = root_path / filename
+            dst_path = dst_root_dir / filename
+
+            if _is_css_file(src_path):
+                cmd: List[str] = [
+                    css_minifier_cmd,
+                    str(src_path),
+                    "-o",
+                    str(dst_path),
+                ]
+                cmd.extend(args)
+
+                proc = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+
+                if proc.returncode != 0:
+                    raise RuntimeError(
+                        f"CSS minifier failed for {src_path} with exit code "
+                        f"{proc.returncode}.\nSTDERR:\n{proc.stderr}"
+                    )
+
+                stats["files_minified"] += 1
+            else:
+                # Copy non-CSS files only if they don't already exist in output_dir
+                if not dst_path.exists():
+                    shutil.copy2(src_path, dst_path)
+                    stats["files_copied"] += 1
+
+    return MinifyCssDirectoryResult(
+        files_minified=stats["files_minified"],
+        files_copied=stats["files_copied"],
+        dirs_created=stats["dirs_created"],
+        source_dir=str(src_root),
+        output_dir=str(dst_root),
+    )
 
 
 def main() -> None:
