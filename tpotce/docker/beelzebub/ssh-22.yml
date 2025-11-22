@@ -1,0 +1,16 @@
+apiVersion: "v1"
+protocol: "ssh"
+address: ":22"
+description: "SSH interactive LLM"
+commands:
+  - regex: "^(.+)$"
+    plugin: "LLMHoneypot"
+serverVersion: "OpenSSH_7.9p1"
+serverName: "ubuntu"
+passwordRegex: "^(root|qwerty|Smoker666|123456|jenkins|minecraft|sinus|alex|postgres|Ly123456)$"
+deadlineTimeoutSeconds: 6000
+plugin:
+  llmModel: ${LLM_MODEL}
+  host: ${LLM_HOST}
+  ollamaModel: ${OLLAMA_MODEL}
+  openAISecretKey: ${OPEN_AI_SECRET_KEY}
