@@ -6,11 +6,12 @@ import NetworkTimeline from "./components/NetworkTimeline.jsx";
 import HoneypotPanel from "./components/HoneypotPanel.jsx";
 import { createDefenseSocket } from "./utils/websocket.js";
 import { fetchAttackLog } from "./utils/api.js";
+import LandingPage from "./components/LandingPage.jsx";
 
 const WS_ENABLED = import.meta.env.VITE_DEFENSE_WS_ENABLED === "true";
 const ATTACK_LOG_POLL_MS = 4000;
 
-export default function App() {
+function DashboardApp() {
   const [events, setEvents] = useState([]);
   const [defenseMemory, setDefenseMemory] = useState({});
   const [honeypotTrigger, setHoneypotTrigger] = useState(null);
@@ -85,7 +86,6 @@ export default function App() {
     if (wsActive || events.length || attackLog.length === 0) {
       return;
     }
-    // Populate the UI with derived events synthesized from attack_log.json when websockets are unavailable.
     const derived = attackLog.map((entry, idx) => ({
       type: "ATTACK_EVENT",
       event: {
@@ -111,7 +111,7 @@ export default function App() {
         classification: evt.classification?.label,
         honeypot: evt.honeypot?.triggered,
       })),
-    [events]
+    [events],
   );
 
   const pulseEvents = events.slice(-3).reverse();
@@ -179,4 +179,12 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+export default function App() {
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+  if (pathname.startsWith("/dashboard")) {
+    return <DashboardApp />;
+  }
+  return <LandingPage />;
 }
