@@ -83,7 +83,7 @@ function DashboardApp() {
   }, []);
 
   useEffect(() => {
-    if (wsActive || events.length || attackLog.length === 0) {
+    if (wsActive || attackLog.length === 0) {
       return;
     }
     const derived = attackLog.map((entry, idx) => ({
@@ -96,12 +96,13 @@ function DashboardApp() {
           target_url: entry.endpoint,
           payload: entry.body || entry.query,
         },
+        status: entry.status,
       },
       classification: { label: entry.method ?? "HTTP" },
       honeypot: {},
     }));
     setEvents(derived.slice(-50));
-  }, [attackLog, wsActive, events.length]);
+  }, [attackLog, wsActive]);
 
   const chain = useMemo(
     () =>

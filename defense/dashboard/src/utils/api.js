@@ -24,7 +24,7 @@ const API_BASE_CANDIDATES = (() => {
   return bases.filter(Boolean);
 })();
 
-async function doFetch(path, signal) {
+async function doFetch(path, signal, init = {}) {
   let lastError;
   const errors = [];
   for (const base of API_BASE_CANDIDATES) {
@@ -32,7 +32,7 @@ async function doFetch(path, signal) {
     const url = `${normalizedBase}${path.startsWith("/") ? path : `/${path}`}`;
     try {
       console.log(`[API] Trying: ${url}`);
-      const response = await fetch(url, { signal });
+      const response = await fetch(url, { signal, ...init });
       if (!response.ok) {
         const text = await response.text();
         const error = new Error(
@@ -72,5 +72,17 @@ export function fetchReconReport(signal) {
 }
 
 export function triggerReconInvestigation(signal) {
-  return doFetch("/recon-investigate", { method: "POST", signal });
+  return doFetch("/recon-investigate", signal, { method: "POST" });
+}
+
+export function armHoneypots(payload = {}, signal) {
+  return doFetch("/honeypots/arm", signal, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function fetchHoneypots(signal) {
+  return doFetch("/honeypots", signal);
 }

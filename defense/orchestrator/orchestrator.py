@@ -70,6 +70,13 @@ class AttackEvent(BaseModel):
     timestamp: str
 
 
+class HoneypotArmRequest(BaseModel):
+    reason: str | None = None
+    delta: int | None = None
+    source: str | None = None
+    services: List[str] | None = None
+
+
 def append_event_log(record: Dict[str, Any]) -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     EVENT_LOG.touch(exist_ok=True)
@@ -197,6 +204,32 @@ async def receive_attack_event(event: AttackEvent):
     await manager.broadcast(sanitized)
 
     return JSONResponse({"status": "ok", "defense_event": sanitized})
+
+
+@app.post("/honeypots/arm")
+async def arm_honeypots(payload: HoneypotArmRequest):
+    """Allow the dashboard (or other callers) to proactively arm honeypots."""
+
+    source = payload.source or "dashboard"
+    report = router.honeypot_manager.arm(
+        reason=payload.reason,
+        delta=payload.delta,
+        source=source,
+        services=payload.services,
+    )
+    console.log(
+        f"[bold cyan]HONEYPOTS[/] armed via {source} "
+        f"(reason={payload.reason or 'unspecified'}, Δ={payload.delta or 0})"
+    )
+    return JSONResponse({"status": "armed", **report})
+
+
+@app.get("/honeypots")
+async def honeypot_inventory() -> JSONResponse:
+    """Expose the current honeypot inventory for the dashboard."""
+
+    payload = router.honeypot_manager.inventory()
+    return JSONResponse(payload)
 
 
 @app.get("/defense-scan")
