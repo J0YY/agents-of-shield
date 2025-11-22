@@ -63,7 +63,6 @@ def list_honeypots(compose_path: Optional[str] = None) -> ListResult:
     services = manager.list_services()
     return ListResult(compose_file=str(manager.compose_path), honeypots=services)
 
-
 @mcp.tool()
 def start_honeypots(
     services: Optional[Sequence[str]] = None,
