@@ -1,12 +1,13 @@
 # Agents of Shield – Attack Agent
 
-An autonomous, LLM-driven red-team bot that continuously probes the intentionally vulnerable “Pet Grooming by Sofia” app at `http://localhost:3000`. The agent observes only HTTP responses, maintains its own internal memory, and loops through a cognition pipeline of **Perception → World Model → Planner** to decide each next step.
+An autonomous, LLM-driven red-team bot that continuously probes the intentionally vulnerable “Pet Grooming by Sofia” app at `http://localhost:3000`. The agent observes only HTTP responses, maintains its own internal memory, and now loops through **Perception → World Model → Orchestrator → Specialist Agent** to decide each next step.
 
 ## Features
 - Fully black-box: no code introspection, only raw HTTP bodies.
-- Three-agent cognition loop backed by OpenAI models.
+- Multi-agent cognition loop (perception, world model, orchestrator, specialists).
 - Structured memory persisted to `state/memory.json` between runs.
-- Dynamic payload generation (SQLi, traversal, backup probing) guided by planner prompts.
+- Specialized tool calls for recon, MCP point scanning, SQL payload generation, honeypot verification, and more.
+- Automatic honeypot suspicion scoring plus verification probes.
 - Terminal-style output with color-coded step summaries for demos.
 
 ## Quickstart
@@ -22,11 +23,12 @@ python agent_attack.py
 ## Architecture
 ```
 agent_attack.py  # orchestrates 20-step loop
-  ├── agents/perception.py    # extracts links/forms/errors from responses
-  ├── agents/world_model.py   # updates persistent memory + goals
-  ├── agents/planner.py       # selects next HTTP action JSON
-  ├── utils/http_executor.py  # runs GET/POST with truncation
-  └── state/memory.json       # evolving knowledge base
+  ├── agents/perception.py       # extracts links/forms/errors from responses
+  ├── agents/world_model.py      # updates persistent memory + goals
+  ├── agents/orchestrator.py     # routes control between recon/MCP/attack/sql/utility/honeypot tools
+  ├── agents/planner.py          # legacy planner (still used by specialist prompts)
+  ├── utils/http_executor.py     # runs GET/POST with truncation
+  └── state/memory.json          # evolving knowledge base
 ```
 Prompts for each LLM role live in `prompts/` so you can tune behavior easily.
 

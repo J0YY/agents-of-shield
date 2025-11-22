@@ -54,4 +54,6 @@ def default_memory() -> Dict[str, List[str]]:
         "failures": [],
         "history": [],
         "recent_actions": [],
+        "alerts": [],
+        "honeypot_notes": [],
     }
