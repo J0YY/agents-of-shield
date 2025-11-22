@@ -20,6 +20,7 @@ from tpot import (  # type: ignore  # pylint: disable=wrong-import-position
     TPotComposeManager,
 )
 
+# Use JSON responses for tool outputs, mirroring the obfuscation server.
 mcp = FastMCP("TPotComposeServer", json_response=True)
 
 
@@ -38,7 +39,7 @@ class ListResult(BaseModel):
 
 
 def _build_manager(compose_path: Optional[str]) -> TPotComposeManager:
-    resolved = Path(compose_path or DEFAULT_COMPOSE_PATH).expanduser()
+    resolved = Path(compose_path or DEFAULT_COMPOSE_PATH).expanduser().resolve()
     return TPotComposeManager(resolved)
 
 
@@ -58,19 +59,34 @@ def _resolve_targets(
 def list_honeypots(compose_path: Optional[str] = None) -> ListResult:
     """
     Return the honeypot services discovered in the compose file.
+
+    - If compose_path is omitted, the DEFAULT_COMPOSE_PATH from tpot.py is used.
+    - Returns the resolved compose file path and a list of honeypot service names.
     """
     manager = _build_manager(compose_path)
     services = manager.list_services()
     return ListResult(compose_file=str(manager.compose_path), honeypots=services)
 
+
 @mcp.tool()
 def start_honeypots(
-    services: Optional[Sequence[str]] = None,
-    port_overrides: Optional[Sequence[str]] = None,
+    services: Optional[List[str]] = None,
+    port_overrides: Optional[List[str]] = None,
     compose_path: Optional[str] = None,
 ) -> ToolResult:
     """
     Start one or more honeypot services, optionally overriding port bindings.
+
+    Parameters:
+    - services: Optional list of honeypot service names. If omitted or empty,
+      all honeypots defined in the compose file are started.
+    - port_overrides: Optional list of port override strings in the format
+      accepted by TPotComposeManager (for example, '2222:22').
+    - compose_path: Optional path to a docker compose file. If omitted,
+      DEFAULT_COMPOSE_PATH from tpot.py is used.
+
+    On success, returns the resolved compose file path, a list of services that
+    were started, any port overrides that were applied, and a status message.
     """
     manager = _build_manager(compose_path)
     targets = _resolve_targets(manager, services)
@@ -88,11 +104,20 @@ def start_honeypots(
 
 @mcp.tool()
 def stop_honeypots(
-    services: Optional[Sequence[str]] = None,
+    services: Optional[List[str]] = None,
     compose_path: Optional[str] = None,
 ) -> ToolResult:
     """
     Stop one or more honeypot services.
+
+    Parameters:
+    - services: Optional list of honeypot service names. If omitted or empty,
+      all honeypots defined in the compose file are stopped.
+    - compose_path: Optional path to a docker compose file. If omitted,
+      DEFAULT_COMPOSE_PATH from tpot.py is used.
+
+    On success, returns the resolved compose file path, a list of services that
+    were stopped, and a status message.
     """
     manager = _build_manager(compose_path)
     targets = _resolve_targets(manager, services)
