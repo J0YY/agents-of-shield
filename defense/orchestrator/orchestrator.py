@@ -1,27 +1,29 @@
 from __future__ import annotations
 
 import json
-from copy import deepcopy
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from rich.console import Console
 
-from .event_router import EventRouter
-from .websocket_server import manager, router as ws_router
 from .codebase_scanner import scan_repository
-from dotenv import load_dotenv
+from .event_router import EventRouter
+from .websocket_server import manager
+from .websocket_server import router as ws_router
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = BASE_DIR.parent
 STATE_DIR = BASE_DIR / "state"
 REPORT_DIR = BASE_DIR / "reports"
 EVENT_LOG = STATE_DIR / "attacker_events.jsonl"
+RECON_REPORT_PATH = STATE_DIR / "recon_report.json"
 VULN_APP_DIR = REPO_ROOT / "vulnerable-app"
 ATTACK_LOG_PATH = VULN_APP_DIR / "attack_log.json"
 MAX_TIMELINE = 200
@@ -94,7 +96,8 @@ def load_recent_events(limit: int = 100) -> List[Dict[str, Any]]:
 
 def load_attack_log(limit: int = 60) -> List[Dict[str, Any]]:
     if not ATTACK_LOG_PATH.exists():
-        raise FileNotFoundError(f"attack_log.json not found at {ATTACK_LOG_PATH}")
+        raise FileNotFoundError(
+            f"attack_log.json not found at {ATTACK_LOG_PATH}")
     with ATTACK_LOG_PATH.open("r", encoding="utf-8", errors="ignore") as fh:
         lines = fh.readlines()
     entries: List[Dict[str, Any]] = []
@@ -128,13 +131,32 @@ def sanitize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     return safe
 
 
+def save_recon_report(report: Dict[str, Any]) -> None:
+    """Save recon report to state directory."""
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    with RECON_REPORT_PATH.open("w", encoding="utf-8") as fh:
+        json.dump(report, fh, indent=2, ensure_ascii=False)
+
+
+def load_recon_report() -> Dict[str, Any] | None:
+    """Load the latest recon report from state directory."""
+    if not RECON_REPORT_PATH.exists():
+        return None
+    try:
+        with RECON_REPORT_PATH.open("r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (json.JSONDecodeError, IOError):
+        return None
+
+
 @app.on_event("startup")
 async def bootstrap() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     EVENT_LOG.touch(exist_ok=True)
     console.rule("[bold green]Defense Orchestrator Ready")
-    console.print(f"[cyan]HTTP http://localhost:{DEFAULT_PORT} · WebSocket ws://localhost:{DEFAULT_PORT}/ws")
+    console.print(
+        f"[cyan]HTTP http://localhost:{DEFAULT_PORT} · WebSocket ws://localhost:{DEFAULT_PORT}/ws")
 
 
 @app.get("/health")
@@ -185,7 +207,8 @@ async def defense_scan() -> JSONResponse:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:  # pragma: no cover - defensive logging
         console.log(f"[red]Scan failed: {exc}")
-        raise HTTPException(status_code=500, detail="Codebase scan failed") from exc
+        raise HTTPException(
+            status_code=500, detail="Codebase scan failed") from exc
     return JSONResponse(payload)
 
 
@@ -199,8 +222,69 @@ async def attack_log(limit: int = 60) -> Dict[str, List[Dict[str, Any]]]:
     return {"entries": entries}
 
 
+@app.post("/recon-investigate")
+async def trigger_recon_investigation() -> JSONResponse:
+    """Trigger recon agent investigation and store the report."""
+    try:
+        # Import here to avoid circular dependencies and handle missing dependencies gracefully
+        import sys
+        import traceback
+
+        recon_agent_path = REPO_ROOT / "defense" / "recon_agent"
+        if str(recon_agent_path) not in sys.path:
+            sys.path.insert(0, str(recon_agent_path))
+
+        # Verify MCP server file exists
+        mcp_server_file = recon_agent_path / "log_reader_mcp_server.py"
+        if not mcp_server_file.exists():
+            raise FileNotFoundError(
+                f"MCP server file not found: {mcp_server_file}")
+
+        from recon_agent import ReconAgent
+
+        agent = ReconAgent(working_dir=REPO_ROOT)
+        # Use investigate_async since we're in an async context
+        console.log("[bold cyan]RECON[/] Starting investigation...")
+        console.log(f"[cyan]Working directory: {REPO_ROOT}")
+        console.log(f"[cyan]Python executable: {sys.executable}")
+        try:
+            report = await agent.investigate_async(context={"trigger": "orchestrator_api"})
+        except Exception as inner_exc:
+            console.log(f"[red]Inner investigation error: {inner_exc}")
+            console.log(f"[red]Inner traceback: {traceback.format_exc()}")
+            raise
+
+        save_recon_report(report)
+        console.log(
+            f"[bold cyan]RECON[/] Investigation completed: {report.get('attack_assessment', {}).get('attack_type', 'unknown')}")
+
+        return JSONResponse({"status": "ok", "report": report})
+    except ImportError as exc:
+        error_msg = f"Recon agent import failed: {exc}"
+        console.log(f"[red]{error_msg}[/]")
+        console.log(f"[red]Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500, detail=error_msg) from exc
+    except Exception as exc:
+        error_msg = f"Investigation failed: {exc}"
+        console.log(f"[red]{error_msg}[/]")
+        console.log(f"[red]Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500, detail=error_msg) from exc
+
+
+@app.get("/recon-report")
+async def get_recon_report() -> Dict[str, Any]:
+    """Get the latest recon report."""
+    report = load_recon_report()
+    if not report:
+        raise HTTPException(
+            status_code=404, detail="No recon report available yet")
+    return report
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("orchestrator.orchestrator:app", host="0.0.0.0", port=7000, reload=True)
-
+    uvicorn.run("orchestrator.orchestrator:app",
+                host="0.0.0.0", port=DEFAULT_PORT, reload=True)

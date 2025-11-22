@@ -48,15 +48,29 @@ class ReconAgent:
         set_tracing_disabled(True)
 
         # Start our custom log reader MCP server as a subprocess over stdio
+        import sys
+
         mcp_server_path = Path(__file__).parent / "log_reader_mcp_server.py"
+        if not mcp_server_path.exists():
+            raise FileNotFoundError(
+                f"MCP server file not found: {mcp_server_path}")
+
+        # Use absolute path for the MCP server script
+        mcp_server_abs_path = mcp_server_path.resolve()
+
+        # Use sys.executable to ensure we use the same Python interpreter
+        # This is important when running from different environments
+        python_executable = sys.executable
+
         async with MCPServerStdio(
             name="NetworkLogReaderServer",
             params={
-                "command": "python",
+                "command": python_executable,
                 # absolute path to the server file
-                "args": [str(mcp_server_path)],
+                "args": [str(mcp_server_abs_path)],
             },
             cache_tools_list=True,
+            client_session_timeout_seconds=300.0,  # 5 minute timeout for investigation
         ) as log_reader_mcp_server:
             # Agent can now call tools from the custom MCP server
             agent = Agent(
@@ -68,12 +82,12 @@ class ReconAgent:
                     "- The logs are at vulnerable-app/attack_log.json in JSONL format (one JSON per line)\n"
                     "- Each entry has: timestamp, ip, method, endpoint, query (object), body (object, optional)\n"
                     "- Example: {\"timestamp\":\"...\",\"ip\":\"::1\",\"method\":\"GET\",\"endpoint\":\"/login\",\"query\":{},\"body\":{}}\n\n"
-                    "HOW TO READ LOGS:\n"
+                    "HOW, FOR EXAMPLE, TO READ LOGS:\n"
                     "- Use the read_network_logs tool from NetworkLogReaderServer (it should be in your available tools)\n"
                     "- Call it with lines=50 and working_dir parameter set to the working directory provided in the task\n"
                     "- The tool returns a dictionary with 'entries' (list of log objects) and 'total_count'\n"
                     "- Analyze the entries in the 'entries' list\n\n"
-                    "WHAT TO LOOK FOR:\n"
+                    "WHAT TO LOOK FOR, INCLUDING BUT NOT LIMITED TO:\n"
                     "- SQL injection: 'OR 1=1', 'OR', UNION, SELECT in query parameters or body values\n"
                     "- Path traversal: ../, ..\\, %2e%2e in endpoints\n"
                     "- Reconnaissance: Access to /admin, /backup-db, /download-db, /config, /debug\n"
@@ -89,7 +103,6 @@ class ReconAgent:
                     '    "confidence": "low|medium|high"\n'
                     "  },\n"
                     '  "evidence": ["specific finding 1", "specific finding 2", ...],\n'
-                    '  "recommendations": ["recommendation 1", ...],\n'
                     '  "intelligence": {"total_requests": <use total_count from tool>, "unique_endpoints": N, "attack_count": N}\n'
                     "}\n\n"
                     "CRITICAL: You MUST call the read_network_logs tool first to get the log data before analyzing!"
