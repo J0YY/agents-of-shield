@@ -1,6 +1,16 @@
-export function createDefenseSocket(onMessage) {
-  const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:7000/ws";
-  const socket = new WebSocket(wsUrl);
+const DEFAULT_ORCHESTRATOR_PORT = import.meta.env.VITE_DEFENSE_PORT || "7700";
+
+function buildWebSocketUrl() {
+  const override = import.meta.env.VITE_WS_URL;
+  if (override) return override;
+  const path = import.meta.env.VITE_WS_PATH || "/ws";
+  const base =
+    window.location.origin.replace(/^http/, "ws").replace(/:\d+$/, `:${DEFAULT_ORCHESTRATOR_PORT}`);
+  return `${base}${path}`;
+}
+
+export function createDefenseSocket(onMessage, { onOpen, onError } = {}) {
+  const socket = new WebSocket(buildWebSocketUrl());
   socket.onmessage = (event) => {
     try {
       const payload = JSON.parse(event.data);
@@ -9,8 +19,13 @@ export function createDefenseSocket(onMessage) {
       console.error("Failed to parse WS payload", err);
     }
   };
-  socket.onopen = () => console.info("Dashboard connected to defense orchestrator.");
-  socket.onerror = (err) => console.error("WebSocket error", err);
+  socket.onopen = () => {
+    console.info("Dashboard connected to defense orchestrator.");
+    onOpen?.();
+  };
+  socket.onerror = (err) => {
+    console.error("WebSocket error", err);
+    onError?.(err);
+  };
   return socket;
 }
-

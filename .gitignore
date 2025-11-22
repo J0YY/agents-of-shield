@@ -13,9 +13,12 @@ build/
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+*.sqlite3
+*.db
+*.jsonl
 .venv/
 env/
 venv/
@@ -58,3 +61,10 @@ logs/
 coverage/
 .cache/
 .tmp/
+
+# Project-specific artifacts
+.defense-cache/
+defense/dashboard/.vite/
+defense/reports/
+attacker/state/
+defense/state/
