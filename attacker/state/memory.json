@@ -103,6 +103,7 @@
     "accessed app.js source code successfully.",
     "accessed sensitive feature flags and keys from /config-prod.",
     "probed unvisited endpoint /backup-db; received 200 status.",
+    "performed fallback recon sweep; accessed homepage.",
     "performed fallback recon sweep; accessed homepage."
   ],
   "failures": [
@@ -161,6 +162,8 @@
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "Performed fallback recon sweep; accessed homepage.",
+    "GET http://localhost:3000/ -> 200",
+    "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
