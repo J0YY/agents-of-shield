@@ -153,9 +153,9 @@ app.get('/debug', (req, res) => {
       env: process.env.NODE_ENV || 'development',
       sampleUsers: rows || [],
       secrets: {
-        apiKey: 'AIzaSyB6z8nQ7d1K4lM8gP3cF5vX9zQweTyUi54',
+        apiKey: process.env.GOOGLE_API_KEY || 'demo-google-key',
         stripe: process.env.STRIPE_API_KEY || 'demo-stripe-key',
-        twilio: 'AC6f7b8c9d0e1f23456789abcdef01234'
+        twilio: process.env.TWILIO_ACCOUNT_SID || 'demo-twilio-sid'
       },
       headers: req.headers
     });
@@ -184,7 +184,7 @@ app.get('/admin-v2', (req, res) => {
   res.json({
     status: 'ok',
     featureFlag: 'admin_v2_preview',
-    adminToken: 'fake-token-use-me',
+    adminToken: process.env.ADMIN_V2_TOKEN || 'demo-admin-token',
     notes: 'Legacy admin route scheduled for removal'
   });
 });
@@ -201,8 +201,10 @@ app.get('/config-prod', (req, res) => {
   res.json({
     featureFlags: ['beta-dashboard', 'express-checkout'],
     paymentGateway: 'https://payments.internal/petgroom',
-    webhookSecret: 'whsec_73b1e8ac2d5f4b0c9d8a67fe4c21b90d',
-    firebasePrivateKey: '-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...SnippedForDemo...\\n-----END PRIVATE KEY-----',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_demo_key',
+    firebasePrivateKey:
+      process.env.FIREBASE_PRIVATE_KEY ||
+      '-----BEGIN PRIVATE KEY-----\\nDEMO\\n-----END PRIVATE KEY-----',
     nodeVersion: process.version
   });
 });

@@ -125,8 +125,6 @@
   ],
   "history": [
     "Repeated access to /download-db confirmed 200 status and SQLite response.",
-    "Received SQLite database format response from /download-db.",
-    "Repeated access to /download-db confirmed 200 status and SQLite response.",
     "Attempted directory traversal on /download-db for /etc/passwd; received 404 error.",
     "Repeated access to /download-db confirmed 200 status and SQLite response.",
     "Attempted directory traversal to access /etc/shadow; received 404 error.",
@@ -179,6 +177,8 @@
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "Performed fallback recon sweep; accessed homepage.",
+    "GET http://localhost:3000/ -> 200",
+    "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
