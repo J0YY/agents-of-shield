@@ -24,17 +24,27 @@ async def main() -> None:
     # 1. Create the MCP server (filesystem over stdio via npx)
     #    This uses the official MCP filesystem server, run via Node's npx. 
     async with MCPServerStdio(
-        name="filesystem-mcp",
+        # Example: Using custom MCP Server defined in my_mcp_server.py
+        name="MyCustomServer",
         params={
-            "command": "npx",
-            "args": [
-                "-y",
-                "@modelcontextprotocol/server-filesystem",
-                str(samples_dir),
-            ],
+            "command": "python",
+            "args": ["my_mcp_server.py"],  # path to the file from step 2
         },
         cache_tools_list=True,
-    ) as mcp_server:
+
+        # Example: using the official filesystem MCP server
+        # name="filesystem-mcp",
+        # params={
+        #     "command": "npx",
+        #     "args": [
+        #         "-y",
+        #         "@modelcontextprotocol/server-filesystem",
+        #         str(samples_dir),
+        #     ],
+        # },
+        # cache_tools_list=True,
+
+    ) as my_mcp_server:
         # 2. Define subagent A: file fetcher using MCP tools
         fetcher_agent = Agent(
             name="FileFetcher",
@@ -45,7 +55,7 @@ async def main() -> None:
                 "Do not invent content that is not actually present in the files."
             ),
             model="gpt-4.1-mini",  # any Responses-compatible model
-            mcp_servers=[mcp_server],  # attach MCP server so tools are available 
+            mcp_servers=[],  # attach MCP server so tools are available 
         )
 
         # 3. Define subagent B: text analyst (also allowed to use MCP if useful)
@@ -55,9 +65,11 @@ async def main() -> None:
                 "You analyze text provided by other agents.\n"
                 "You can summarise, extract key points, and suggest research questions.\n"
                 "Be concise and structured in your answers."
+                "You have access to tools from MyCustomServer. "
+                "Use `add` for arithmetic and `word_count` for text analysis."
             ),
             model="gpt-4.1-mini",
-            mcp_servers=[mcp_server],
+            mcp_servers=[my_mcp_server],
         )
 
         # 4. Wrap each subagent as a tool (agents-as-tools pattern). 
