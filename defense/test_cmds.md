@@ -3,7 +3,7 @@
 from the base of the directory
 
 ```
-python -m defense.initial_defense_orchestrator.initial_defense_orchestrator vulnerable-app obfuscated_app
+python -m defense.initial_defense_orchestrator.initial_defense_orchestrator vulnerable-app .
 ```
 
 ```

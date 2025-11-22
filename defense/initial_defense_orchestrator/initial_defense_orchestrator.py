@@ -39,13 +39,15 @@ def build_defense_orchestrator(
     obfuscation_tool,
     honeypot_tool,
     filesystem_server,
+    node_runner_server,
 ) -> Agent:
     """
     Build the 'defense setup' orchestrator agent.
 
     This agent is responsible for setting up multiple defense mechanisms for a
     target source code repository by delegating to specialized subagents that are
-    exposed as tools, and by using a filesystem MCP server to inspect the code.
+    exposed as tools, and by using MCP servers to inspect the code and start the
+    obfuscated app.
     """
     return Agent(
         name="DefenseSetupAgent",
@@ -91,6 +93,11 @@ def build_defense_orchestrator(
             "- `get_file_info(path)`:\n"
             "    Retrieve basic metadata for a file or directory.\n\n"
             "Treat the filesystem MCP server as read-only in this workflow.\n\n"
+            "4) A Node runtime MCP server (`NodeRunnerServer`) that provides:\n"
+            "- `start_node_app(working_dir)`:\n"
+            "    Start a Node.js application by running `npm start` inside the given\n"
+            "    directory. This is intended to start the obfuscated copy of the app\n"
+            "    after obfuscation completes.\n\n"
             "Your responsibilities when given a repository root and a defense_root:\n"
             "1) Use the filesystem tools to scan and assess the codebase located under\n"
             "   repo_root. At a minimum, you should:\n"
@@ -138,13 +145,22 @@ def build_defense_orchestrator(
             "     port bindings\n"
             "   The input should also explain, briefly, why these specific honeypots\n"
             "   were chosen given the observed codebase.\n"
-            "8) After both tools return, summarize what defenses were applied,\n"
-            "   where the outputs were written, which honeypots were started (and why\n"
-            "   they were chosen), and any next steps for additional defenses.\n\n"
+            "8) After obfuscation has completed successfully, start the obfuscated\n"
+            "   application by calling the `start_node_app` MCP tool exactly once.\n"
+            "   Pass `working_dir` as the absolute path of the obfuscated output\n"
+            "   directory so that `npm start` runs against the obfuscated app.\n"
+            "9) After the obfuscated app has been started and the honeypots have been\n"
+            "   launched, summarize what defenses were applied, where the outputs were\n"
+            "   written, which honeypots were started (and why they were chosen), and\n"
+            "   confirm that the obfuscated app was started along with any next steps\n"
+            "   for additional defenses.\n\n"
             "Important rules:\n"
             "- Always perform at least one obfuscation pass using `obfuscate_web_app`.\n"
             "- Always perform at least one honeypot start operation using\n"
             "  `run_initial_honeypots`.\n"
+            "- After obfuscation, always start the obfuscated app once using the\n"
+            "  `start_node_app` MCP tool with `working_dir` set to the obfuscated\n"
+            "  output directory.\n"
             "- Never start the entire set of honeypots; restrict the initial deployment\n"
             "  to a small, well-justified subset (no more than 3 honeypots) that aligns\n"
             "  with the likely attack surface of the application.\n"
@@ -152,14 +168,18 @@ def build_defense_orchestrator(
             "  modify files.\n"
             "- Do not attempt to call lower-level MCP tools directly; instead, rely on\n"
             "  the `obfuscate_web_app` and `run_initial_honeypots` tools to run their\n"
-            "  internal subagents, and the filesystem MCP tools for inspection.\n"
+            "  internal subagents, the filesystem MCP tools for inspection, and the\n"
+            "  `start_node_app` tool from the Node runtime MCP server to start the\n"
+            "  obfuscated app.\n"
             "- Do not ask follow-up questions; assume the repository structure and paths\n"
             "  provided are correct.\n"
             "- Your final answer should be a clear, concise description of what you did,\n"
-            "  what honeypots were started and why, and where the results live on disk."
+            "  what honeypots were started and why, where the results live on disk, and\n"
+            "  that the obfuscated app was started (including which directory it was\n"
+            "  run from)."
         ),
         tools=[obfuscation_tool, honeypot_tool],
-        mcp_servers=[filesystem_server],
+        mcp_servers=[filesystem_server, node_runner_server],
     )
 
 
@@ -176,10 +196,18 @@ async def main() -> None:
     repo_root, defense_root = require_args()
     obfuscated_output_dir = os.path.join(defense_root, "obfuscated-app")
 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
     # Start the Python-based filesystem MCP server.
     filesystem_server_script = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
+        base_dir,
         "filesystem_mcp_server.py",
+    )
+
+    # Start the Node-runner MCP server (for `npm start` on the obfuscated app).
+    node_runner_server_script = os.path.join(
+        base_dir,
+        "node_runner_mcp_server.py",
     )
 
     async with MCPServerStdio(
@@ -190,7 +218,15 @@ async def main() -> None:
         },
         cache_tools_list=True,
         client_session_timeout_seconds=600.0,
-    ) as filesystem_server:
+    ) as filesystem_server, MCPServerStdio(
+        name="NodeRunnerServer",
+        params={
+            "command": "python",
+            "args": [node_runner_server_script],
+        },
+        cache_tools_list=True,
+        client_session_timeout_seconds=600.0,
+    ) as node_runner_server:
         # Bundle MCP server + obfuscation agent via ObfuscationAgentContext.
         # Bundle MCP server + honeypot agent via TPotAgentContext.
         # Then wrap each agent as a tool using .as_tool().
@@ -228,6 +264,7 @@ async def main() -> None:
                     obfuscation_tool=obfuscation_tool,
                     honeypot_tool=honeypot_tool,
                     filesystem_server=filesystem_server,
+                    node_runner_server=node_runner_server,
                 )
 
                 # Initial instruction to the orchestrator.
@@ -249,8 +286,11 @@ async def main() -> None:
                     "- Obfuscate the JavaScript for the web app.\n"
                     "- Minify HTML (including any EJS templates) and CSS.\n"
                     "- Start a small, targeted set of honeypot services using T-Pot, chosen "
-                    "to reflect the most plausible attacks against this web app based on the "
-                    "evidence you observe in the codebase.\n\n"
+                    "  to reflect the most plausible attacks against this web app based on the "
+                    "  evidence you observe in the codebase.\n"
+                    "- After obfuscation, start the obfuscated app by calling the "
+                    "  `start_node_app` MCP tool once with `working_dir` set to the "
+                    "  obfuscated output directory.\n\n"
                     "To handle obfuscation, call the `obfuscate_web_app` tool exactly once "
                     "with a single string argument that includes:\n"
                     f"- `source_dir: {repo_root}`\n"
@@ -266,16 +306,23 @@ async def main() -> None:
                     "you want to start those specific honeypot services using the default "
                     "T-Pot compose file and no port overrides, unless there is a strong "
                     "reason to customize ports.\n\n"
-                    "After both tools return, summarize what defenses were applied, where "
-                    "the resulting obfuscated/minified code was written, which honeypots "
-                    "were started (and how they relate to the inferred attack surface), "
-                    "and any recommended next steps."
+                    "After the obfuscation tool returns, you must call the `start_node_app` "
+                    "tool from the Node runtime MCP server exactly once, setting\n"
+                    f"`working_dir` to `{obfuscated_output_dir}` so that `npm start` runs "
+                    "against the obfuscated app.\n\n"
+                    "After both the honeypots have been started and the obfuscated app has "
+                    "been launched, summarize what defenses were applied, where the resulting "
+                    "obfuscated/minified code was written, which honeypots were started (and "
+                    "how they relate to the inferred attack surface), and confirm that the "
+                    "obfuscated app was started (including which directory it was run from), "
+                    "as well as any recommended next steps."
                 )
 
                 result = await Runner.run(
                     orchestrator_agent,
                     task,
                     hooks=ToolLoggingHooks(),
+                    max_turns=25,
                 )
 
                 print("=== DEFENSE ORCHESTRATOR FINAL OUTPUT ===")

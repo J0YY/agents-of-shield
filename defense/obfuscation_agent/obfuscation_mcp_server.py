@@ -14,6 +14,7 @@ mcp = FastMCP(
 )
 
 # Directories we never traverse when processing source trees
+# (we copy them verbatim instead of obfuscating/minifying).
 EXCLUDED_DIRS = {
     "node_modules",
     ".git",
@@ -47,6 +48,48 @@ def _ensure_dir(path: Path, stats: Dict[str, int]) -> None:
     if not path.exists():
         path.mkdir(parents=True, exist_ok=True)
         stats["dirs_created"] += 1
+
+
+def _copy_tree_verbatim(src: Path, dst: Path, stats: Dict[str, int]) -> None:
+    """
+    Recursively copy src -> dst, without overwriting existing files,
+    and without any obfuscation/minification.
+    """
+    for root, dirs, files in os.walk(src):
+        root_path = Path(root)
+        rel_root = root_path.relative_to(src)
+        dst_root_dir = dst / rel_root
+
+        _ensure_dir(dst_root_dir, stats)
+
+        for filename in files:
+            src_path = root_path / filename
+            dst_path = dst_root_dir / filename
+            if not dst_path.exists():
+                shutil.copy2(src_path, dst_path)
+                stats["files_copied"] += 1
+
+
+def _copy_excluded_subdirs(
+    root_path: Path,
+    dst_root_dir: Path,
+    dirs: List[str],
+    stats: Dict[str, int],
+) -> None:
+    """
+    For any immediate child directory under root_path whose name is in
+    EXCLUDED_DIRS, copy it verbatim to dst_root_dir and prevent os.walk
+    from traversing into it.
+    """
+    excluded = [d for d in dirs if d in EXCLUDED_DIRS]
+
+    for dirname in excluded:
+        src_excluded = root_path / dirname
+        dst_excluded = dst_root_dir / dirname
+        _copy_tree_verbatim(src_excluded, dst_excluded, stats)
+
+    # Remove excluded dirs so os.walk does not traverse into them
+    dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
 
 
 # ---------- Result models --------------------------------------------------
@@ -89,10 +132,11 @@ def obfuscate_directory(
     """
     Recursively copy source_dir to output_dir, obfuscating JavaScript files.
 
-    - Skips common dependency / VCS / build directories:
-      node_modules, .git, dist, build, etc.
-    - Files with extensions .js or .jsx are obfuscated using the
-      `javascript-obfuscator` CLI.
+    - Does not traverse into common dependency / VCS / build directories
+      (EXCLUDED_DIRS) for obfuscation, but copies those directories verbatim
+      to output_dir without modification.
+    - Files with extensions .js or .jsx (outside EXCLUDED_DIRS) are obfuscated
+      using the `javascript-obfuscator` CLI.
     - All other files are copied as-is, but will not overwrite existing files
       in output_dir. This allows other tools (HTML/CSS minifiers) to safely
       run over the same output_dir without clobbering each other's results.
@@ -120,10 +164,8 @@ def obfuscate_directory(
         rel_root = root_path.relative_to(src_root)
         dst_root_dir = dst_root / rel_root
 
-        # Filter out dirs we don't want to traverse (node_modules, .git, dist, build, etc.)
-        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
-
         _ensure_dir(dst_root_dir, stats)
+        _copy_excluded_subdirs(root_path, dst_root_dir, dirs, stats)
 
         for filename in files:
             src_path = root_path / filename
@@ -178,9 +220,11 @@ def minify_html_directory(
     """
     Recursively copy source_dir to output_dir, minifying .html/.htm files.
 
-    - Skips common dependency / VCS / build directories (EXCLUDED_DIRS).
-    - Files with .html/.htm extensions are minified using the
-      `html-minifier-terser` CLI.
+    - Does not traverse into common dependency / VCS / build directories
+      (EXCLUDED_DIRS) for minification, but copies those directories verbatim
+      to output_dir without modification.
+    - Files with .html/.htm extensions (outside EXCLUDED_DIRS) are minified
+      using the `html-minifier-terser` CLI.
       Default options:
         --collapse-whitespace
         --remove-comments
@@ -228,9 +272,8 @@ def minify_html_directory(
         rel_root = root_path.relative_to(src_root)
         dst_root_dir = dst_root / rel_root
 
-        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
-
         _ensure_dir(dst_root_dir, stats)
+        _copy_excluded_subdirs(root_path, dst_root_dir, dirs, stats)
 
         for filename in files:
             src_path = root_path / filename
@@ -284,9 +327,11 @@ def minify_css_directory(
     """
     Recursively copy source_dir to output_dir, minifying .css files.
 
-    - Skips common dependency / VCS / build directories (EXCLUDED_DIRS).
-    - Files with .css extension are minified using the `csso` CLI
-      (installed via `csso-cli`).
+    - Does not traverse into common dependency / VCS / build directories
+      (EXCLUDED_DIRS) for minification, but copies those directories verbatim
+      to output_dir without modification.
+    - Files with .css extension (outside EXCLUDED_DIRS) are minified using
+      the `csso` CLI (installed via `csso-cli`).
       Typical usage is `csso input.css -o output.css`.
     - All other files are copied as-is, but will not overwrite existing files
       in output_dir.
@@ -319,9 +364,8 @@ def minify_css_directory(
         rel_root = root_path.relative_to(src_root)
         dst_root_dir = dst_root / rel_root
 
-        dirs[:] = [d for d in dirs if d not in EXCLUDED_DIRS]
-
         _ensure_dir(dst_root_dir, stats)
+        _copy_excluded_subdirs(root_path, dst_root_dir, dirs, stats)
 
         for filename in files:
             src_path = root_path / filename
