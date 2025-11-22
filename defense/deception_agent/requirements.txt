@@ -1,0 +1,20 @@
+# Deception Agent Dependencies
+
+# Core agent framework
+agents>=0.1.0
+openai>=1.0.0
+
+# MCP server framework
+mcp>=0.1.0
+fastmcp>=0.1.0
+
+# Standard library (included with Python)
+# - asyncio
+# - json
+# - pathlib
+# - typing
+# - datetime
+# - random
+
+# Note: These should already be installed if you've set up the defense environment
+# Install with: pip install -r requirements.txt

@@ -1,0 +1,26 @@
+{
+  "name": "deception-proxy",
+  "version": "1.0.0",
+  "description": "Zero-modification deception proxy for any web application",
+  "main": "deception_proxy.js",
+  "scripts": {
+    "start": "node deception_proxy.js",
+    "start:testing": "node deception_proxy.js --testing-mode",
+    "start:custom": "node deception_proxy.js --target http://localhost:3000 --port 8000"
+  },
+  "keywords": [
+    "deception",
+    "proxy",
+    "security",
+    "honeypot",
+    "reverse-proxy"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "http-proxy": "^1.18.1"
+  },
+  "bin": {
+    "deception-proxy": "./deception_proxy.js"
+  }
+}
