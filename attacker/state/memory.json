@@ -103,10 +103,6 @@
     "accessed app.js source code successfully.",
     "accessed sensitive feature flags and keys from /config-prod.",
     "probed unvisited endpoint /backup-db; received 200 status.",
-    "performed fallback recon sweep; accessed homepage.",
-    "performed fallback recon sweep; accessed homepage.",
-    "performed fallback recon sweep; accessed homepage.",
-    "performed fallback recon sweep; accessed homepage.",
     "performed fallback recon sweep; accessed homepage."
   ],
   "failures": [
@@ -124,7 +120,6 @@
     "404 error for missing JavaScript file at /public/js/app.js"
   ],
   "history": [
-    "Repeated access to /download-db confirmed 200 status and SQLite response.",
     "Attempted directory traversal on /download-db for /etc/passwd; received 404 error.",
     "Repeated access to /download-db confirmed 200 status and SQLite response.",
     "Attempted directory traversal to access /etc/shadow; received 404 error.",
@@ -177,6 +172,7 @@
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "Performed fallback recon sweep; accessed homepage.",
+    "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
