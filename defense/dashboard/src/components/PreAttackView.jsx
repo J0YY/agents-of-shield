@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchDefenseScan } from "../utils/api";
+import RequestRateChart from "./RequestRateChart.jsx";
 
 const SYSTEM_LAYERS = [
   { title: "Honeypot Manager", detail: "Decoy rotation online" },
@@ -233,6 +234,8 @@ export default function PreAttackView() {
             </article>
           ))}
         </div>
+
+        <RequestRateChart />
       </div>
 
       <div className="space-y-6">

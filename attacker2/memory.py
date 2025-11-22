@@ -65,10 +65,13 @@ class AttackMemory:
 
     def record_step(self, step: int, task: str, output: str) -> Dict[str, Any]:
         parsed = _safe_json_parse(output)
+        trimmed_output = output
+        if isinstance(trimmed_output, str) and len(trimmed_output) > 1500:
+            trimmed_output = trimmed_output[:1500] + " …[truncated]…"
         entry = {
             "step": step,
             "task": task,
-            "raw_output": output,
+            "raw_output": trimmed_output,
         }
         if parsed:
             entry.update(parsed)

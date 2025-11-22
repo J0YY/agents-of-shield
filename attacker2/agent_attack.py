@@ -18,10 +18,16 @@ MEMORY_PATH = Path(__file__).resolve().parent / "state" / "memory.json"
 OPERATIONS_LOG = Path(__file__).resolve().parent / "state" / "operations.jsonl"
 
 
+GREEN = "\033[92m"
+DIM = "\033[2m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
+
+
 @dataclass
 class AttackConfig:
     target_base: str = os.getenv("ATTACKER2_TARGET_BASE", "http://localhost:3000")
-    max_steps: int = int(os.getenv("ATTACKER2_MAX_STEPS", "8"))
+    max_steps: int = int(os.getenv("ATTACKER2_MAX_STEPS", "5"))
     model: str = os.getenv("ATTACKER2_MODEL", os.getenv("OPENAI_ATTACK_MODEL", "gpt-4o-mini"))
 
 
@@ -48,33 +54,30 @@ def _log_operation(entry: Dict[str, object]) -> None:
 
 
 def _print_step(entry: Dict[str, object]) -> None:
-    divider = "=" * 70
+    divider = GREEN + "=" * 70 + RESET
     print("\n" + divider)
-    print(f"STEP {entry.get('step')}: {entry.get('action_summary', 'No summary provided')}")
+    print(f"{BOLD}{GREEN}STEP {entry.get('step')}:{RESET} {entry.get('action_summary', 'No summary provided')}")
     commands = entry.get("commands_executed") or []
     if commands:
-        print("COMMANDS:")
-        for cmd in commands:
+        print(f"{GREEN}CMD:{RESET}")
+        for cmd in commands[:3]:
             print(f"  • {cmd}")
     findings = entry.get("findings") or []
     if findings:
-        print("FINDINGS:")
-        for finding in findings:
+        print(f"{GREEN}FINDINGS:{RESET}")
+        for finding in findings[:3]:
             print(f"  • {finding}")
     warnings = entry.get("warnings") or []
     if warnings:
-        print("WARNINGS:")
-        for warn in warnings:
+        print(f"{GREEN}WARNINGS:{RESET}")
+        for warn in warnings[:3]:
             print(f"  • {warn}")
-    snippet = entry.get("raw_output_snippet") or entry.get("raw_output", "")[:220]
+    snippet = entry.get("raw_output_snippet") or entry.get("raw_output", "")[:140]
     if snippet:
-        print("RAW SNIPPET:")
-        print(f"  {snippet}")
+        print(f"{DIM}SNIPPET:{RESET} {snippet}")
     next_targets = entry.get("next_targets") or []
     if next_targets:
-        print("NEXT TARGETS:")
-        for target in next_targets[:4]:
-            print(f"  • {target}")
+        print(f"{GREEN}NEXT:{RESET} " + ", ".join(next_targets[:4]))
     print(divider)
 
 
@@ -101,13 +104,13 @@ async def run_attack_loop() -> None:
 
         for step in range(1, cfg.max_steps + 1):
             task = _build_task(step, cfg, memory)
-            print(f"\n>>> Executing attack step {step}/{cfg.max_steps}")
+            print(f"\n{GREEN}{BOLD}>>> DEPLOYING STEP {step}/{cfg.max_steps}{RESET}")
             result = await Runner.run(agent, task)
             entry = memory.record_step(step, task, result.final_output)
             _log_operation(entry)
             _print_step(entry)
 
-    print("\nAttack loop complete. State saved to", MEMORY_PATH)
+    print(f"\n{GREEN}{BOLD}Attack loop complete.{RESET} State saved to {MEMORY_PATH}")
 
 
 def main() -> None:
