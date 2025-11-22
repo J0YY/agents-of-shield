@@ -1,8 +1,17 @@
+import { useEffect, useMemo, useRef } from "react";
+
 export default function LiveAttackFeed({ events }) {
-  const feed = events.slice().reverse();
+  const listRef = useRef(null);
+  const feed = useMemo(() => events.slice().reverse(), [events]);
+
+  useEffect(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = 0;
+    }
+  }, [feed]);
 
   return (
-    <section className="glass-panel h-full">
+    <section className="glass-panel h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-white/50">Live Attack Feed</p>
@@ -10,7 +19,7 @@ export default function LiveAttackFeed({ events }) {
         </div>
         <span className="pill">{feed.length.toString().padStart(2, "0")} events</span>
       </div>
-      <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+      <div ref={listRef} className="space-y-3 flex-1 overflow-y-auto pr-1">
         {feed.map((evt) => {
           const risk = evt.payload?.payload_risk_score ?? 0;
           const badge =

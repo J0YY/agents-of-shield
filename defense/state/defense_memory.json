@@ -1,7 +1,24 @@
 {
-  "honeypot_history": [],
-  "attack_patterns": [],
+  "honeypot_history": [
+    {
+      "step": 99,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-22T21:30:00Z"
+    },
+    {
+      "step": 42,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-22T22:05:00Z"
+    }
+  ],
+  "attack_patterns": [
+    {
+      "label": "admin_exposure",
+      "path": "/admin-v2"
+    }
+  ],
   "suspicious_endpoints": [],
-  "future_recommendations": []
+  "future_recommendations": [
+    "Promote honeypot telemetry to SIEM rules"
+  ]
 }
-

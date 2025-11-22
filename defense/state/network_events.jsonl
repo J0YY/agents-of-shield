@@ -1,0 +1,2 @@
+{"step": 99, "endpoint": "http://localhost:3000/admin-v2", "method": "GET", "status": 404, "summary": "manual probe", "timestamp": "2025-11-22T21:30:00Z"}
+{"step": 42, "endpoint": "http://localhost:3000/admin-v2", "method": "GET", "status": 404, "summary": "manual probe", "timestamp": "2025-11-22T22:05:00Z"}

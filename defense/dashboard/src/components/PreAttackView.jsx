@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchDefenseScan } from "../utils/api";
+import { armHoneypots, fetchDefenseScan } from "../utils/api";
 import RequestRateChart from "./RequestRateChart.jsx";
 
 const SYSTEM_LAYERS = [
@@ -34,6 +34,8 @@ export default function PreAttackView() {
   const [scanComplete, setScanComplete] = useState(false);
   const [selectedBlueprints, setSelectedBlueprints] = useState([]);
   const [confirmation, setConfirmation] = useState(null);
+  const [arming, setArming] = useState(false);
+  const [loadoutError, setLoadoutError] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -135,11 +137,31 @@ export default function PreAttackView() {
     setConfirmation(null);
   };
 
-  const handleConfirm = () => {
-    setConfirmation({
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      traps: selectedBlueprints.length
-    });
+  const handleConfirm = async () => {
+    const services = selectedBlueprints
+      .map((id) => blueprintLookup[id]?.service)
+      .filter(Boolean);
+    if (!services.length) {
+      setLoadoutError("Selected blueprints aren't mapped to honeypots yet.");
+      return;
+    }
+    setArming(true);
+    setLoadoutError(null);
+    try {
+      await armHoneypots({
+        reason: "pre_attack_loadout",
+        source: "pre_attack_view",
+        services,
+      });
+      setConfirmation({
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        traps: services.length,
+      });
+    } catch (err) {
+      setLoadoutError(err.message || "Unable to arm decoys");
+    } finally {
+      setArming(false);
+    }
   };
 
   return (
@@ -163,10 +185,7 @@ export default function PreAttackView() {
               <div className="radar-grid">
                 <div className="radar-beam" />
                 <div className="radar-pulse" />
-                <span className="radar-label top-left">agents_example</span>
-                <span className="radar-label top-right">attacker</span>
-                <span className="radar-label bottom-left">defense</span>
-                <span className="radar-label bottom-right">vulnerable-app</span>
+                
               </div>
               <div className="scan-percent">
                 <p className="text-xs uppercase tracking-[0.3em] text-white/60">scan progress</p>
@@ -342,11 +361,13 @@ export default function PreAttackView() {
               type="button"
               className="honeypot-cta-button"
               onClick={handleConfirm}
-              disabled={!selectedBlueprints.length}
+              disabled={!selectedBlueprints.length || arming}
             >
-              Arm selected decoys
+              {arming ? "Arming..." : "Arm selected decoys"}
             </button>
           </div>
+
+          {loadoutError ? <p className="text-rose-200 text-xs">{loadoutError}</p> : null}
 
           {confirmation ? (
             <p className="text-emerald-300 text-sm">
