@@ -1,0 +1,389 @@
+{
+  "steps": [
+    {
+      "step": 1,
+      "task": "You are running offensive step 1/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nNo previous steps recorded.\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Performed a service detection scan on the target.\",\n  \"commands_executed\": [\"nmap_scan --target host.docker.internal --ports 3000 --additional_args '-Pn -sV'\"],\n  \"findings\": [\"Port 3000 is open and running a Node.js (Express middleware) service.\"],\n  \"next_targets\": [\"http://host.docker.internal:3000\"],\n  \"warnings\": [\"none\"],\n  \"raw_output_snippet\": \"Nmap scan report indicates that port 3000 is open, running Node.js (Express middleware) on the target.\"\n}\n```",
+      "action_summary": "Performed a service detection scan on the target.",
+      "commands_executed": [
+        "nmap_scan --target host.docker.internal --ports 3000 --additional_args '-Pn -sV'"
+      ],
+      "findings": [
+        "Port 3000 is open and running a Node.js (Express middleware) service."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000"
+      ],
+      "warnings": [
+        "none"
+      ],
+      "raw_output_snippet": "Nmap scan report indicates that port 3000 is open, running Node.js (Express middleware) on the target."
+    },
+    {
+      "step": 2,
+      "task": "You are running offensive step 2/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nFindings: Port 3000 is open and running a Node.js (Express middleware) service.\nTarget queue: http://host.docker.internal:3000\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory brute force scan against the target URL.\",\n  \"commands_executed\": [\"dirb http://host.docker.internal:3000\"],\n  \"findings\": [\n    \"Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source\",\n    \"Identified potential for SQL injection via /login and /signup forms.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/env\",\n    \"http://host.docker.internal:3000/login\",\n    \"http://host.docker.internal:3000/signup\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Potential honeypot signals on /admin and /dashboard due to common admin paths.\",\n    \"Increased risk on /debug and /env which may expose sensitive configurations.\"\n  ],\n  \"raw_output_snippet\": \"Found endpoints: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/dashboard.\"\n}\n```",
+      "action_summary": "Executed directory brute force scan against the target URL.",
+      "commands_executed": [
+        "dirb http://host.docker.internal:3000"
+      ],
+      "findings": [
+        "Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source",
+        "Identified potential for SQL injection via /login and /signup forms."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/env",
+        "http://host.docker.internal:3000/login",
+        "http://host.docker.internal:3000/signup",
+        "http://host.docker.internal:3000/debug"
+      ],
+      "warnings": [
+        "Potential honeypot signals on /admin and /dashboard due to common admin paths.",
+        "Increased risk on /debug and /env which may expose sensitive configurations."
+      ],
+      "raw_output_snippet": "Found endpoints: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/dashboard."
+    },
+    {
+      "step": 3,
+      "task": "You are running offensive step 3/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nStep 2: Executed directory brute force scan against the target URL.\nFindings: Port 3000 is open and running a Node.js (Express middleware) service.; Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source; Identified potential for SQL injection via /login and /signup forms.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "{\n  \"action_summary\": \"Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\",\n  \"commands_executed\": [\n    \"sqlmap_scan {'url': 'http://host.docker.internal:3000/login', 'additional_args': '--batch'}\",\n    \"sqlmap_scan {'url': 'http://host.docker.internal:3000/signup', 'additional_args': '--batch'}\"\n  ],\n  \"findings\": [\n    \"No injectable parameters found on /login.\",\n    \"No injectable parameters found on /signup.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/env\",\n    \"http://host.docker.internal:3000/admin\"\n  ],\n  \"warnings\": [\n    \"No SQL injection vulnerabilities detected.\",\n    \"Potential protection mechanisms may be in place.\"\n  ],\n  \"raw_output_snippet\": \"All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times. Results available in CSV file.\"\n}",
+      "action_summary": "Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.",
+      "commands_executed": [
+        "sqlmap_scan {'url': 'http://host.docker.internal:3000/login', 'additional_args': '--batch'}",
+        "sqlmap_scan {'url': 'http://host.docker.internal:3000/signup', 'additional_args': '--batch'}"
+      ],
+      "findings": [
+        "No injectable parameters found on /login.",
+        "No injectable parameters found on /signup."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/env",
+        "http://host.docker.internal:3000/admin"
+      ],
+      "warnings": [
+        "No SQL injection vulnerabilities detected.",
+        "Potential protection mechanisms may be in place."
+      ],
+      "raw_output_snippet": "All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times. Results available in CSV file."
+    },
+    {
+      "step": 4,
+      "task": "You are running offensive step 4/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nStep 2: Executed directory brute force scan against the target URL.\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nFindings: Identified potential for SQL injection via /login and /signup forms.; No injectable parameters found on /login.; No injectable parameters found on /signup.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\",\n  \"commands_executed\": [\n    \"nikto_scan http://host.docker.internal:3000\",\n    \"sqlmap_scan http://host.docker.internal:3000/admin\"\n  ],\n  \"findings\": [\n    \"Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.\",\n    \"SQLMap indicated that no injectable parameters were found in the /admin URL.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Honeypot suspicion due to lack of dynamic parameters on /admin and other endpoints revealed by SQLMap.\",\n    \"Operational risks remain due to visible potential flags from Nikto indicating sensitive files.\"\n  ],\n  \"raw_output_snippet\": \"Nikto found potential files like /admin/ and /wp-config.php that could contain sensitive data. SQLMap confirmed no injectable parameters in /admin.\"\n}\n```",
+      "action_summary": "Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.",
+      "commands_executed": [
+        "nikto_scan http://host.docker.internal:3000",
+        "sqlmap_scan http://host.docker.internal:3000/admin"
+      ],
+      "findings": [
+        "Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.",
+        "SQLMap indicated that no injectable parameters were found in the /admin URL."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin",
+        "http://host.docker.internal:3000/debug"
+      ],
+      "warnings": [
+        "Honeypot suspicion due to lack of dynamic parameters on /admin and other endpoints revealed by SQLMap.",
+        "Operational risks remain due to visible potential flags from Nikto indicating sensitive files."
+      ],
+      "raw_output_snippet": "Nikto found potential files like /admin/ and /wp-config.php that could contain sensitive data. SQLMap confirmed no injectable parameters in /admin."
+    },
+    {
+      "step": 5,
+      "task": "You are running offensive step 5/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nStep 2: Executed directory brute force scan against the target URL.\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nFindings: No injectable parameters found on /signup.; Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.; SQLMap indicated that no injectable parameters were found in the /admin URL.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory brute force and Nikto scans on the /admin endpoint.\",\n  \"commands_executed\": [\n    \"dirb http://host.docker.internal:3000/admin /usr/share/dirb/wordlists/common.txt -o /tmp/admin_dirb.txt\",\n    \"nikto -h http://host.docker.internal:3000/admin -output /tmp/nikto_admin_report.txt\"\n  ],\n  \"findings\": [\n    \"Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.\",\n    \"No items found in directory brute force scan against /admin.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin/login\",\n    \"http://host.docker.internal:3000/admin/backup\",\n    \"http://host.docker.internal:3000/admin/phpmyadmin\"\n  ],\n  \"warnings\": [\n    \"No honeypot indications detected, but proceed with caution on sensitive endpoints.\"\n  ],\n  \"raw_output_snippet\": \"Nikto reported the absence of anti-clickjacking X-Frame-Options and X-Content-Type-Options headers for the /admin endpoint, which could pose security risks.\"\n}\n```",
+      "action_summary": "Executed directory brute force and Nikto scans on the /admin endpoint.",
+      "commands_executed": [
+        "dirb http://host.docker.internal:3000/admin /usr/share/dirb/wordlists/common.txt -o /tmp/admin_dirb.txt",
+        "nikto -h http://host.docker.internal:3000/admin -output /tmp/nikto_admin_report.txt"
+      ],
+      "findings": [
+        "Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.",
+        "No items found in directory brute force scan against /admin."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin/login",
+        "http://host.docker.internal:3000/admin/backup",
+        "http://host.docker.internal:3000/admin/phpmyadmin"
+      ],
+      "warnings": [
+        "No honeypot indications detected, but proceed with caution on sensitive endpoints."
+      ],
+      "raw_output_snippet": "Nikto reported the absence of anti-clickjacking X-Frame-Options and X-Content-Type-Options headers for the /admin endpoint, which could pose security risks."
+    },
+    {
+      "step": 1,
+      "task": "You are running offensive step 1/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 2: Executed directory brute force scan against the target URL.\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nFindings: SQLMap indicated that no injectable parameters were found in the /admin URL.; Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.; No items found in directory brute force scan against /admin.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "{\n  \"action_summary\": \"Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\",\n  \"commands_executed\": [\n    \"nmap -sV -Pn http://host.docker.internal:3000\",\n    \"nmap -sV -Pn http://host.docker.internal:3000/env\",\n    \"nmap -sV -Pn http://host.docker.internal:3000/login\"\n  ],\n  \"findings\": [\n    \"Nmap scans did not execute due to incorrect target format.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000\",\n    \"http://host.docker.internal:3000/env\",\n    \"http://host.docker.internal:3000/login\"\n  ],\n  \"warnings\": [\n    \"Ensure that the URL format is correct for network scanning.\"\n  ],\n  \"raw_output_snippet\": \"Nmap was unable to split netmask from the target expression, resulting in 0 hosts scanned.\"\n}",
+      "action_summary": "Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.",
+      "commands_executed": [
+        "nmap -sV -Pn http://host.docker.internal:3000",
+        "nmap -sV -Pn http://host.docker.internal:3000/env",
+        "nmap -sV -Pn http://host.docker.internal:3000/login"
+      ],
+      "findings": [
+        "Nmap scans did not execute due to incorrect target format."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000",
+        "http://host.docker.internal:3000/env",
+        "http://host.docker.internal:3000/login"
+      ],
+      "warnings": [
+        "Ensure that the URL format is correct for network scanning."
+      ],
+      "raw_output_snippet": "Nmap was unable to split netmask from the target expression, resulting in 0 hosts scanned."
+    },
+    {
+      "step": 2,
+      "task": "You are running offensive step 2/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nFindings: Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.; No items found in directory brute force scan against /admin.; Nmap scans did not execute due to incorrect target format.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\",\n  \"commands_executed\": [\n    \"nmap_scan {\\\"target\\\":\\\"host.docker.internal\\\",\\\"scan_type\\\":\\\"-sV\\\",\\\"ports\\\":\\\"3000\\\"}\",\n    \"sqlmap_scan {\\\"url\\\":\\\"http://host.docker.internal:3000/login\\\",\\\"data\\\":\\\"username=admin&password=admin\\\",\\\"additional_args\\\":\\\"--risk=2 --level=2\\\"}\",\n    \"sqlmap_scan {\\\"url\\\":\\\"http://host.docker.internal:3000/signup\\\",\\\"data\\\":\\\"username=admin&email=test@example.com&password=admin\\\",\\\"additional_args\\\":\\\"--risk=2 --level=2\\\"}\"\n  ],\n  \"findings\": [\n    \"Nmap scan confirms port 3000 is open and running Node.js (Express middleware).\",\n    \"SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/dashboard\"\n  ],\n  \"warnings\": [\n    \"The application may have a WAF or IPS in place, complicating further testing.\",\n    \"Multiple HTTP 500 errors observed during SQLMap scans indicate potential instability.\"\n  ],\n  \"raw_output_snippet\": \"Nmap scan report for host.docker.internal indicates port 3000 is open, running Node.js. SQLMap testing revealed that the parameters in /login and /signup do not appear to be injectable.\"\n}\n```",
+      "action_summary": "Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.",
+      "commands_executed": [
+        "nmap_scan {\"target\":\"host.docker.internal\",\"scan_type\":\"-sV\",\"ports\":\"3000\"}",
+        "sqlmap_scan {\"url\":\"http://host.docker.internal:3000/login\",\"data\":\"username=admin&password=admin\",\"additional_args\":\"--risk=2 --level=2\"}",
+        "sqlmap_scan {\"url\":\"http://host.docker.internal:3000/signup\",\"data\":\"username=admin&email=test@example.com&password=admin\",\"additional_args\":\"--risk=2 --level=2\"}"
+      ],
+      "findings": [
+        "Nmap scan confirms port 3000 is open and running Node.js (Express middleware).",
+        "SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/dashboard"
+      ],
+      "warnings": [
+        "The application may have a WAF or IPS in place, complicating further testing.",
+        "Multiple HTTP 500 errors observed during SQLMap scans indicate potential instability."
+      ],
+      "raw_output_snippet": "Nmap scan report for host.docker.internal indicates port 3000 is open, running Node.js. SQLMap testing revealed that the parameters in /login and /signup do not appear to be injectable."
+    },
+    {
+      "step": 3,
+      "task": "You are running offensive step 3/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nFindings: Nmap scans did not execute due to incorrect target format.; Nmap scan confirms port 3000 is open and running Node.js (Express middleware).; SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory scanning and Nikto scan on the target.\",\n  \"commands_executed\": [\n    \"dirb http://host.docker.internal:3000 /usr/share/dirb/wordlists/common.txt\",\n    \"nikto -h http://host.docker.internal:3000/env\"\n  ],\n  \"findings\": [\n    \"Discovered /admin and /backup-db endpoints returning 200 OK.\",\n    \"Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/backup-db\",\n    \"http://host.docker.internal:3000/env\"\n  ],\n  \"warnings\": [\n    \"Potentially sensitive information exposed at /env/#wp-config.php#.\",\n    \"Considerable number of endpoints discovered, indicating complex structure; honeypot flags may trigger.\"\n  ],\n  \"raw_output_snippet\": \"Nikto scan indicated missing X-Frame-Options and X-Content-Type-Options headers, posing vulnerability concerns. Additionally, sensitive file found at /env/#wp-config.php# could be critical for exploitation.\"\n}\n```",
+      "action_summary": "Executed directory scanning and Nikto scan on the target.",
+      "commands_executed": [
+        "dirb http://host.docker.internal:3000 /usr/share/dirb/wordlists/common.txt",
+        "nikto -h http://host.docker.internal:3000/env"
+      ],
+      "findings": [
+        "Discovered /admin and /backup-db endpoints returning 200 OK.",
+        "Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin",
+        "http://host.docker.internal:3000/backup-db",
+        "http://host.docker.internal:3000/env"
+      ],
+      "warnings": [
+        "Potentially sensitive information exposed at /env/#wp-config.php#.",
+        "Considerable number of endpoints discovered, indicating complex structure; honeypot flags may trigger."
+      ],
+      "raw_output_snippet": "Nikto scan indicated missing X-Frame-Options and X-Content-Type-Options headers, posing vulnerability concerns. Additionally, sensitive file found at /env/#wp-config.php# could be critical for exploitation."
+    },
+    {
+      "step": 4,
+      "task": "You are running offensive step 4/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nStep 3: Executed directory scanning and Nikto scan on the target.\nFindings: SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.; Discovered /admin and /backup-db endpoints returning 200 OK.; Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\",\n  \"commands_executed\": [\n    \"gobuster_scan url=http://host.docker.internal:3000 mode=dir wordlist=/usr/share/dirb/wordlists/common.txt additional_args=-t 50\",\n    \"nikto_scan target=http://host.docker.internal:3000/env additional_args=\"\n  ],\n  \"findings\": [\n    \"Identified several valid endpoints including /dashboard, /debug, and /source.\",\n    \"Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/env/#wp-config.php#\",\n    \"http://host.docker.internal:3000/dashboard\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Potentially sensitive file exposed: /env/#wp-config.php#.\",\n    \"Missing key HTTP headers may indicate exploitable security posture.\"\n  ],\n  \"raw_output_snippet\": \"Gobuster scanned and found endpoints such as /admin, /backup-db, /dashboard, and /debug, while Nikto highlighted missing security headers and flagged the wp-config.php file as exposed.\"\n}\n```",
+      "action_summary": "Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.",
+      "commands_executed": [
+        "gobuster_scan url=http://host.docker.internal:3000 mode=dir wordlist=/usr/share/dirb/wordlists/common.txt additional_args=-t 50",
+        "nikto_scan target=http://host.docker.internal:3000/env additional_args="
+      ],
+      "findings": [
+        "Identified several valid endpoints including /dashboard, /debug, and /source.",
+        "Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/env/#wp-config.php#",
+        "http://host.docker.internal:3000/dashboard",
+        "http://host.docker.internal:3000/debug"
+      ],
+      "warnings": [
+        "Potentially sensitive file exposed: /env/#wp-config.php#.",
+        "Missing key HTTP headers may indicate exploitable security posture."
+      ],
+      "raw_output_snippet": "Gobuster scanned and found endpoints such as /admin, /backup-db, /dashboard, and /debug, while Nikto highlighted missing security headers and flagged the wp-config.php file as exposed."
+    },
+    {
+      "step": 5,
+      "task": "You are running offensive step 5/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nStep 3: Executed directory scanning and Nikto scan on the target.\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nFindings: Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.; Identified several valid endpoints including /dashboard, /debug, and /source.; Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\",\n  \"commands_executed\": [\n    \"sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --batch\",\n    \"nikto -h http://host.docker.internal:3000/env\"\n  ],\n  \"findings\": [\n    \"SQLMap identified no injectable parameters on the /login endpoint.\",\n    \"Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/source\"\n  ],\n  \"warnings\": [\n    \"All scanned parameters on /login appear non-injectable, may indicate WAF protection.\",\n    \"Missing security headers could lead to potential vulnerabilities.\"\n  ],\n  \"raw_output_snippet\": \"Nikto revealed the anti-clickjacking X-Frame-Options header is not present, and the X-Content-Type-Options header is also missing, which may increase vulnerability risks.\"\n}\n```",
+      "action_summary": "Executed SQLMap and Nikto scans on targets to identify vulnerabilities.",
+      "commands_executed": [
+        "sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --batch",
+        "nikto -h http://host.docker.internal:3000/env"
+      ],
+      "findings": [
+        "SQLMap identified no injectable parameters on the /login endpoint.",
+        "Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/debug",
+        "http://host.docker.internal:3000/source"
+      ],
+      "warnings": [
+        "All scanned parameters on /login appear non-injectable, may indicate WAF protection.",
+        "Missing security headers could lead to potential vulnerabilities."
+      ],
+      "raw_output_snippet": "Nikto revealed the anti-clickjacking X-Frame-Options header is not present, and the X-Content-Type-Options header is also missing, which may increase vulnerability risks."
+    },
+    {
+      "step": 1,
+      "task": "You are running offensive step 1/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nStep 3: Executed directory scanning and Nikto scan on the target.\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nFindings: Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.; SQLMap identified no injectable parameters on the /login endpoint.; Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nmap and SQLMap scans on localhost.\",\n  \"commands_executed\": [\n    \"nmap_scan localhost -sV -p80\",\n    \"sqlmap_scan http://localhost:3000/login\"\n  ],\n  \"findings\": [\n    \"Nmap revealed port 80 closed on localhost.\",\n    \"SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.\"\n  ],\n  \"next_targets\": [\"http://localhost:3000/env\", \"http://localhost:3000/login\"],\n  \"warnings\": [\n    \"No open ports detected, potential misconfiguration.\",\n    \"Connection issues with SQLMap may indicate security measures.\"\n  ],\n  \"raw_output_snippet\": \"Nmap scan revealed port 80 closed on localhost. SQLMap encountered 'Connection refused' while attempting to reach the /login endpoint, indicating a potential issue with target accessibility.\"\n}\n```",
+      "action_summary": "Executed Nmap and SQLMap scans on localhost.",
+      "commands_executed": [
+        "nmap_scan localhost -sV -p80",
+        "sqlmap_scan http://localhost:3000/login"
+      ],
+      "findings": [
+        "Nmap revealed port 80 closed on localhost.",
+        "SQLMap could not connect to the /login endpoint, reporting 'Connection refused'."
+      ],
+      "next_targets": [
+        "http://localhost:3000/env",
+        "http://localhost:3000/login"
+      ],
+      "warnings": [
+        "No open ports detected, potential misconfiguration.",
+        "Connection issues with SQLMap may indicate security measures."
+      ],
+      "raw_output_snippet": "Nmap scan revealed port 80 closed on localhost. SQLMap encountered 'Connection refused' while attempting to reach the /login endpoint, indicating a potential issue with target accessibility."
+    },
+    {
+      "step": 2,
+      "task": "You are running offensive step 2/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 3: Executed directory scanning and Nikto scan on the target.\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nStep 1: Executed Nmap and SQLMap scans on localhost.\nFindings: Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.; Nmap revealed port 80 closed on localhost.; SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "{\n  \"action_summary\": \"Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\",\n  \"commands_executed\": [\n    \"sqlmap_scan --url http://host.docker.internal:3000/env --level=1 --risk=1 --batch\",\n    \"sqlmap_scan --url http://host.docker.internal:3000/login --level=1 --risk=1 --batch\"\n  ],\n  \"findings\": [\n    \"Both /env and /login endpoints had no injectable parameters according to SQLMap scans.\",\n    \"HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"No vulnerabilities were detected, indicating a possible hardening against SQL injection.\",\n    \"The repeated 404 errors raise caution about potential honeypot implementation.\"\n  ],\n  \"raw_output_snippet\": \"SQLMap indicated that all tested parameters do not appear to be injectable for both /env and /login, prompting a warning to increase testing parameters or check for WAF.\"\n}",
+      "action_summary": "Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.",
+      "commands_executed": [
+        "sqlmap_scan --url http://host.docker.internal:3000/env --level=1 --risk=1 --batch",
+        "sqlmap_scan --url http://host.docker.internal:3000/login --level=1 --risk=1 --batch"
+      ],
+      "findings": [
+        "Both /env and /login endpoints had no injectable parameters according to SQLMap scans.",
+        "HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs."
+      ],
+      "next_targets": [],
+      "warnings": [
+        "No vulnerabilities were detected, indicating a possible hardening against SQL injection.",
+        "The repeated 404 errors raise caution about potential honeypot implementation."
+      ],
+      "raw_output_snippet": "SQLMap indicated that all tested parameters do not appear to be injectable for both /env and /login, prompting a warning to increase testing parameters or check for WAF."
+    },
+    {
+      "step": 3,
+      "task": "You are running offensive step 3/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nStep 1: Executed Nmap and SQLMap scans on localhost.\nStep 2: Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\nFindings: SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.; Both /env and /login endpoints had no injectable parameters according to SQLMap scans.; HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "{\n  \"action_summary\": \"Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.\",\n  \"commands_executed\": [\n    \"sqlmap --url=http://host.docker.internal:3000/env --level=5 --risk=3\",\n    \"sqlmap --url=http://host.docker.internal:3000/login --level=5 --risk=3\"\n  ],\n  \"findings\": [\n    \"No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.\",\n    \"HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"Multiple 404 errors suggest potential honeypot signals or misconfiguration.\",\n    \"No parameters were found for injection attempts, indicating a low likelihood of success.\"\n  ],\n  \"raw_output_snippet\": \"No injectable parameters found for both /env and /login endpoints... HTTP error codes detected during run: 404 (Not Found) - 3 times.\"\n}",
+      "action_summary": "Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.",
+      "commands_executed": [
+        "sqlmap --url=http://host.docker.internal:3000/env --level=5 --risk=3",
+        "sqlmap --url=http://host.docker.internal:3000/login --level=5 --risk=3"
+      ],
+      "findings": [
+        "No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.",
+        "HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs."
+      ],
+      "next_targets": [],
+      "warnings": [
+        "Multiple 404 errors suggest potential honeypot signals or misconfiguration.",
+        "No parameters were found for injection attempts, indicating a low likelihood of success."
+      ],
+      "raw_output_snippet": "No injectable parameters found for both /env and /login endpoints... HTTP error codes detected during run: 404 (Not Found) - 3 times."
+    },
+    {
+      "step": 4,
+      "task": "You are running offensive step 4/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nStep 1: Executed Nmap and SQLMap scans on localhost.\nStep 2: Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\nStep 3: Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.\nFindings: HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.; No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.; HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nikto scan on http://host.docker.internal:3000 to identify vulnerabilities.\",\n  \"commands_executed\": [\"nikto_scan target=http://host.docker.internal:3000\"],\n  \"findings\": [\n    \"X-Frame-Options header is missing, potentially vulnerable to clickjacking.\",\n    \"X-Content-Type-Options header is not set, allowing MIME type rendering issues.\",\n    \"Possible sensitive file discovered: #wp-config.php# stored in the server.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin/\",\n    \"http://host.docker.internal:3000/login/\",\n    \"http://host.docker.internal:3000/debug/\"\n  ],\n  \"warnings\": [\n    \"Potential honeypot risk on /admin/, /debug/, given their administrative nature.\"\n  ],\n  \"raw_output_snippet\": \"Nikto found missing X-Frame-Options and X-Content-Type-Options headers, along with a potentially sensitive file: #wp-config.php#.\"\n}\n```",
+      "action_summary": "Executed Nikto scan on http://host.docker.internal:3000 to identify vulnerabilities.",
+      "commands_executed": [
+        "nikto_scan target=http://host.docker.internal:3000"
+      ],
+      "findings": [
+        "X-Frame-Options header is missing, potentially vulnerable to clickjacking.",
+        "X-Content-Type-Options header is not set, allowing MIME type rendering issues.",
+        "Possible sensitive file discovered: #wp-config.php# stored in the server."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin/",
+        "http://host.docker.internal:3000/login/",
+        "http://host.docker.internal:3000/debug/"
+      ],
+      "warnings": [
+        "Potential honeypot risk on /admin/, /debug/, given their administrative nature."
+      ],
+      "raw_output_snippet": "Nikto found missing X-Frame-Options and X-Content-Type-Options headers, along with a potentially sensitive file: #wp-config.php#."
+    },
+    {
+      "step": 5,
+      "task": "You are running offensive step 5/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 1: Executed Nmap and SQLMap scans on localhost.\nStep 2: Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\nStep 3: Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.\nStep 4: Executed Nikto scan on http://host.docker.internal:3000 to identify vulnerabilities.\nFindings: X-Frame-Options header is missing, potentially vulnerable to clickjacking.; X-Content-Type-Options header is not set, allowing MIME type rendering issues.; Possible sensitive file discovered: #wp-config.php# stored in the server.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
+      "raw_output": "{\n  \"action_summary\": \"Executed SQLMap scans on /env and /login endpoints with no injectable parameters found.\",\n  \"commands_executed\": [\n    \"sqlmap --url http://host.docker.internal:3000/env --risk=3 --level=5 --dump\",\n    \"sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --dump\"\n  ],\n  \"findings\": [\n    \"No injectable parameters found on /env and /login endpoints.\",\n    \"HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\"potential WAF or protection mechanism may exist on the target.\"],\n  \"raw_output_snippet\": \"All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times.\"\n}",
+      "action_summary": "Executed SQLMap scans on /env and /login endpoints with no injectable parameters found.",
+      "commands_executed": [
+        "sqlmap --url http://host.docker.internal:3000/env --risk=3 --level=5 --dump",
+        "sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --dump"
+      ],
+      "findings": [
+        "No injectable parameters found on /env and /login endpoints.",
+        "HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations."
+      ],
+      "next_targets": [],
+      "warnings": [
+        "potential WAF or protection mechanism may exist on the target."
+      ],
+      "raw_output_snippet": "All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times."
+    }
+  ],
+  "findings": [
+    "Port 3000 is open and running a Node.js (Express middleware) service.",
+    "Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source",
+    "Identified potential for SQL injection via /login and /signup forms.",
+    "No injectable parameters found on /login.",
+    "No injectable parameters found on /signup.",
+    "Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.",
+    "SQLMap indicated that no injectable parameters were found in the /admin URL.",
+    "Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.",
+    "No items found in directory brute force scan against /admin.",
+    "Nmap scans did not execute due to incorrect target format.",
+    "Nmap scan confirms port 3000 is open and running Node.js (Express middleware).",
+    "SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.",
+    "Discovered /admin and /backup-db endpoints returning 200 OK.",
+    "Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.",
+    "Identified several valid endpoints including /dashboard, /debug, and /source.",
+    "Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.",
+    "SQLMap identified no injectable parameters on the /login endpoint.",
+    "Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.",
+    "Nmap revealed port 80 closed on localhost.",
+    "SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.",
+    "Both /env and /login endpoints had no injectable parameters according to SQLMap scans.",
+    "HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.",
+    "No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.",
+    "HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs.",
+    "X-Frame-Options header is missing, potentially vulnerable to clickjacking.",
+    "X-Content-Type-Options header is not set, allowing MIME type rendering issues.",
+    "Possible sensitive file discovered: #wp-config.php# stored in the server.",
+    "No injectable parameters found on /env and /login endpoints.",
+    "HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations."
+  ],
+  "pending_targets": [
+    "http://host.docker.internal:3000",
+    "http://host.docker.internal:3000/env",
+    "http://host.docker.internal:3000/login",
+    "http://host.docker.internal:3000/signup",
+    "http://host.docker.internal:3000/debug",
+    "http://host.docker.internal:3000/admin",
+    "http://host.docker.internal:3000/admin/login",
+    "http://host.docker.internal:3000/admin/backup",
+    "http://host.docker.internal:3000/admin/phpmyadmin",
+    "http://host.docker.internal:3000/dashboard",
+    "http://host.docker.internal:3000/backup-db",
+    "http://host.docker.internal:3000/env/#wp-config.php#",
+    "http://host.docker.internal:3000/source",
+    "http://localhost:3000/env",
+    "http://localhost:3000/login",
+    "http://host.docker.internal:3000/admin/",
+    "http://host.docker.internal:3000/login/",
+    "http://host.docker.internal:3000/debug/"
+  ]
+}

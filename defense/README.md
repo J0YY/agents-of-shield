@@ -18,19 +18,19 @@ agents-of-shield-defense/
 1. **Install orchestrator deps**
 
    ```bash
-   cd agents-of-shield-defense/orchestrator
+   cd agents-of-shield/defense/orchestrator
    python3 -m venv .venv && source .venv/bin/activate
    pip install -r requirements.txt
    ```
 
 2. **Run the orchestrator**
-
+   From the agents-of-shield/defense folder:
    ```bash
-   uvicorn orchestrator.orchestrator:app --reload --port 7000
+   uvicorn orchestrator.orchestrator:app --reload --port 7700 --host 0.0.0.0
    ```
 
-   - Receives attacker events via `POST http://localhost:7000/attack-event`
-   - Broadcasts WebSocket updates on `ws://localhost:7000/ws` (set `VITE_WS_URL` if you relocate it)
+   - Receives attacker events via `POST http://localhost:7700/attack-event`
+   - Broadcasts WebSocket updates on `ws://localhost:7700/ws` (set `VITE_WS_URL` if you relocate it)
    - Persists events to `state/attacker_events.jsonl`
 
 3. **Start the dashboard**
@@ -45,7 +45,7 @@ agents-of-shield-defense/
 
 4. **Point attacker at the orchestrator**
 
-   Ensure the attacker agent POSTs each step to `http://localhost:7000/attack-event`. The orchestrator will route the event to every defensive agent, update honeypot memory, and stream telemetry to the dashboard.
+   Ensure the attacker agent POSTs each step to `http://localhost:7700/attack-event`. The orchestrator will route the event to every defensive agent, update honeypot memory, and stream telemetry to the dashboard.
 
 ## Defensive Agents Overview
 
