@@ -120,8 +120,6 @@
     "404 error for missing JavaScript file at /public/js/app.js"
   ],
   "history": [
-    "Attempted directory traversal on /download-db for /etc/passwd; received 404 error.",
-    "Repeated access to /download-db confirmed 200 status and SQLite response.",
     "Attempted directory traversal to access /etc/shadow; received 404 error.",
     "Received SQLite database format response from /download-db.",
     "Repeated access to /download-db confirmed 200 status with SQLite format responses.",
@@ -166,12 +164,6 @@
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
-    "GET http://localhost:3000/ -> 200",
-    "GET http://localhost:3000/ -> 200",
-    "GET http://localhost:3000/ -> 200",
-    "GET http://localhost:3000/ -> 200",
-    "GET http://localhost:3000/ -> 200",
-    "Performed fallback recon sweep; accessed homepage.",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
     "GET http://localhost:3000/ -> 200",
