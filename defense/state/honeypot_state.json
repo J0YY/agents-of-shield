@@ -1,0 +1,17 @@
+{
+  "honeypots": {
+    "/admin-v2": {
+      "description": "Decoy admin interface",
+      "last_trigger_step": null
+    },
+    "/backup-db": {
+      "description": "Decoy backup snapshot",
+      "last_trigger_step": null
+    },
+    "/config-prod": {
+      "description": "Decoy configuration surface",
+      "last_trigger_step": null
+    }
+  }
+}
+

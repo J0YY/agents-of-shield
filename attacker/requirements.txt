@@ -1,0 +1,4 @@
+requests
+python-dotenv
+colorama
+openai>=1.0.0

@@ -153,8 +153,9 @@ app.get('/debug', (req, res) => {
       env: process.env.NODE_ENV || 'development',
       sampleUsers: rows || [],
       secrets: {
-        apiKey: 'internal-dev-key-999',
-        stripe: 'sk_live_fake_0001'
+        apiKey: 'AIzaSyB6z8nQ7d1K4lM8gP3cF5vX9zQweTyUi54',
+        stripe: process.env.STRIPE_API_KEY || 'demo-stripe-key',
+        twilio: 'AC6f7b8c9d0e1f23456789abcdef01234'
       },
       headers: req.headers
     });
@@ -200,7 +201,8 @@ app.get('/config-prod', (req, res) => {
   res.json({
     featureFlags: ['beta-dashboard', 'express-checkout'],
     paymentGateway: 'https://payments.internal/petgroom',
-    webhookSecret: 'whsec_fake_982734',
+    webhookSecret: 'whsec_73b1e8ac2d5f4b0c9d8a67fe4c21b90d',
+    firebasePrivateKey: '-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC...SnippedForDemo...\\n-----END PRIVATE KEY-----',
     nodeVersion: process.version
   });
 });
