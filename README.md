@@ -10,11 +10,13 @@ LLM-powered botnets can now sweep thousands of vibe-coded apps in minutes. Found
 
 ![1b (1)](https://github.com/user-attachments/assets/e483c763-462e-4b3d-8287-b9b8060fd179)
 
-**Agents of Shield** delivers the opposite experience: plug-and-lure protection that behaves like an elite SOC, but is packaged for a two-person startup. We read your repo, drop in a lightweight agent, light up honeypots, and run a hosted “Defense Command” so you see attacks — and misdirect them — in real time.
+**Agents of Shield** delivers the opposite experience: plug-and-lure protection that behaves like an elite SOC, but is packaged for a two-person startup. 
+
 
 ![2b](https://github.com/user-attachments/assets/fac35daf-018c-4d4f-a13b-028cf435f663)
 
-The end-to-end workflow is extremely simple, as seen in the demo gif:
+We read your repo, drop in a lightweight agent, light up honeypots, and run a hosted “Defense Command” so you see attacks — and misdirect them — in real time.
+
 ![3](https://github.com/user-attachments/assets/af587dd0-cc6a-4eba-b6a4-51ae2303be00)
 
 ---
@@ -28,6 +30,7 @@ The end-to-end workflow is extremely simple, as seen in the demo gif:
 ![4](https://github.com/user-attachments/assets/eec9d11b-ae75-4e69-94b4-a88c8f9f0b6c)
 
 That’s it. No SIEM plumbing, no security headcount.
+
 ![5](https://github.com/user-attachments/assets/180e26a5-52a6-42d5-aa83-7da1a2394eb9)
 
 ---
@@ -39,9 +42,11 @@ That’s it. No SIEM plumbing, no security headcount.
 * **Click-to-deploy honeypots** — fake admin consoles, backup zips, config dumps, printer queues — each with detectors, payload capture, and funnels for follow-up  
 * **Alerting fabric** — email, Slack, or LLM summaries (“Botnet-from-VN hit /download-db; Honey DB triggered, payload captured…”)  
 * **Enterprise playbook, democratized** — tuned to tireless, automated adversaries so founders can stay focused on shipping
+  
 ![6](https://github.com/user-attachments/assets/db8661d8-c1bf-4c70-b602-bd48822efe55)
 
 In our live demo, we show what it looks like to have an agentic LLM attack a vulnerable web app. Our honeypot traps the agentic infiltrator, which is the point.
+
 ![7](https://github.com/user-attachments/assets/dda9a672-6b08-4364-8b86-368585ea7636)
 
 ---
