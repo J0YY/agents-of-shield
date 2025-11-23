@@ -2,337 +2,477 @@
   "steps": [
     {
       "step": 1,
-      "task": "You are running offensive step 1/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nNo previous steps recorded.\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Performed a service detection scan on the target.\",\n  \"commands_executed\": [\"nmap_scan --target host.docker.internal --ports 3000 --additional_args '-Pn -sV'\"],\n  \"findings\": [\"Port 3000 is open and running a Node.js (Express middleware) service.\"],\n  \"next_targets\": [\"http://host.docker.internal:3000\"],\n  \"warnings\": [\"none\"],\n  \"raw_output_snippet\": \"Nmap scan report indicates that port 3000 is open, running Node.js (Express middleware) on the target.\"\n}\n```",
-      "action_summary": "Performed a service detection scan on the target.",
+      "task": "Channel: WEB\nStep 1/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: Cowrie[SSH \u00b7 Telnet], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], Heralding[SMTP \u00b7 DB \u00b7 VNC]\n\nContext from memory:\nWEB step 2: Conducted SQLMap and Dirb scans on the /admin endpoint with no vulnerabilities found.\nWEB step 3: Conducted Nikto scans on /signup, /debug, and /admin endpoints revealing several security misconfigurations.\nWEB step 4: Executed SQLMap scans on the /admin/login and /debug endpoints, both resulting in 404 errors.\nWEB step 5: Executed directory brute force scan on the /admin/backup endpoint with no findings.\nFindings: Both endpoints returned 404 errors, indicating they may not exist or be incorrectly configured.; No open ports detected on admin/backup endpoint.; No directories found during Dirb scan.\nTarget queue: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/admin/login, http://host.docker.internal:3000/admin/backup\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed HTTP probes and scans on admin endpoints.\",\n  \"commands_executed\": [\n    \"gobuster_scan http://host.docker.internal:3000/admin\",\n    \"nikto_scan http://host.docker.internal:3000/admin\",\n    \"sqlmap_scan http://host.docker.internal:3000/admin/login --level=5 --risk=3\",\n    \"sqlmap_scan http://host.docker.internal:3000/admin/backup --level=5 --risk=3\"\n  ],\n  \"findings\": [\n    \"Gobuster returned no directories for /admin.\",\n    \"Nikto detected missing security headers on /admin.\",\n    \"SQLMap found 404 errors on both /admin/login and /admin/backup.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\"Unauthorized access attempts could trigger honeypots.\"],\n  \"raw_output_snippet\": \"Nikto detected: The anti-clickjacking X-Frame-Options header is not present. SQLMap found 404 errors on both /admin/login and /admin/backup.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed HTTP probes and scans on admin endpoints.",
       "commands_executed": [
-        "nmap_scan --target host.docker.internal --ports 3000 --additional_args '-Pn -sV'"
+        "gobuster_scan http://host.docker.internal:3000/admin",
+        "nikto_scan http://host.docker.internal:3000/admin",
+        "sqlmap_scan http://host.docker.internal:3000/admin/login --level=5 --risk=3",
+        "sqlmap_scan http://host.docker.internal:3000/admin/backup --level=5 --risk=3"
       ],
       "findings": [
-        "Port 3000 is open and running a Node.js (Express middleware) service."
+        "Gobuster returned no directories for /admin.",
+        "Nikto detected missing security headers on /admin.",
+        "SQLMap found 404 errors on both /admin/login and /admin/backup."
       ],
-      "next_targets": [
-        "http://host.docker.internal:3000"
-      ],
+      "next_targets": [],
       "warnings": [
-        "none"
+        "Unauthorized access attempts could trigger honeypots."
       ],
-      "raw_output_snippet": "Nmap scan report indicates that port 3000 is open, running Node.js (Express middleware) on the target."
-    },
-    {
-      "step": 2,
-      "task": "You are running offensive step 2/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nFindings: Port 3000 is open and running a Node.js (Express middleware) service.\nTarget queue: http://host.docker.internal:3000\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory brute force scan against the target URL.\",\n  \"commands_executed\": [\"dirb http://host.docker.internal:3000\"],\n  \"findings\": [\n    \"Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source\",\n    \"Identified potential for SQL injection via /login and /signup forms.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/env\",\n    \"http://host.docker.internal:3000/login\",\n    \"http://host.docker.internal:3000/signup\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Potential honeypot signals on /admin and /dashboard due to common admin paths.\",\n    \"Increased risk on /debug and /env which may expose sensitive configurations.\"\n  ],\n  \"raw_output_snippet\": \"Found endpoints: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/dashboard.\"\n}\n```",
-      "action_summary": "Executed directory brute force scan against the target URL.",
-      "commands_executed": [
-        "dirb http://host.docker.internal:3000"
-      ],
-      "findings": [
-        "Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source",
-        "Identified potential for SQL injection via /login and /signup forms."
-      ],
-      "next_targets": [
-        "http://host.docker.internal:3000/env",
-        "http://host.docker.internal:3000/login",
-        "http://host.docker.internal:3000/signup",
-        "http://host.docker.internal:3000/debug"
-      ],
-      "warnings": [
-        "Potential honeypot signals on /admin and /dashboard due to common admin paths.",
-        "Increased risk on /debug and /env which may expose sensitive configurations."
-      ],
-      "raw_output_snippet": "Found endpoints: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/dashboard."
-    },
-    {
-      "step": 3,
-      "task": "You are running offensive step 3/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nStep 2: Executed directory brute force scan against the target URL.\nFindings: Port 3000 is open and running a Node.js (Express middleware) service.; Discovered endpoints: /admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source; Identified potential for SQL injection via /login and /signup forms.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "{\n  \"action_summary\": \"Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\",\n  \"commands_executed\": [\n    \"sqlmap_scan {'url': 'http://host.docker.internal:3000/login', 'additional_args': '--batch'}\",\n    \"sqlmap_scan {'url': 'http://host.docker.internal:3000/signup', 'additional_args': '--batch'}\"\n  ],\n  \"findings\": [\n    \"No injectable parameters found on /login.\",\n    \"No injectable parameters found on /signup.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/env\",\n    \"http://host.docker.internal:3000/admin\"\n  ],\n  \"warnings\": [\n    \"No SQL injection vulnerabilities detected.\",\n    \"Potential protection mechanisms may be in place.\"\n  ],\n  \"raw_output_snippet\": \"All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times. Results available in CSV file.\"\n}",
-      "action_summary": "Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.",
-      "commands_executed": [
-        "sqlmap_scan {'url': 'http://host.docker.internal:3000/login', 'additional_args': '--batch'}",
-        "sqlmap_scan {'url': 'http://host.docker.internal:3000/signup', 'additional_args': '--batch'}"
-      ],
-      "findings": [
-        "No injectable parameters found on /login.",
-        "No injectable parameters found on /signup."
-      ],
-      "next_targets": [
-        "http://host.docker.internal:3000/env",
-        "http://host.docker.internal:3000/admin"
-      ],
-      "warnings": [
-        "No SQL injection vulnerabilities detected.",
-        "Potential protection mechanisms may be in place."
-      ],
-      "raw_output_snippet": "All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times. Results available in CSV file."
-    },
-    {
-      "step": 4,
-      "task": "You are running offensive step 4/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nStep 2: Executed directory brute force scan against the target URL.\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nFindings: Identified potential for SQL injection via /login and /signup forms.; No injectable parameters found on /login.; No injectable parameters found on /signup.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\",\n  \"commands_executed\": [\n    \"nikto_scan http://host.docker.internal:3000\",\n    \"sqlmap_scan http://host.docker.internal:3000/admin\"\n  ],\n  \"findings\": [\n    \"Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.\",\n    \"SQLMap indicated that no injectable parameters were found in the /admin URL.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Honeypot suspicion due to lack of dynamic parameters on /admin and other endpoints revealed by SQLMap.\",\n    \"Operational risks remain due to visible potential flags from Nikto indicating sensitive files.\"\n  ],\n  \"raw_output_snippet\": \"Nikto found potential files like /admin/ and /wp-config.php that could contain sensitive data. SQLMap confirmed no injectable parameters in /admin.\"\n}\n```",
-      "action_summary": "Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.",
-      "commands_executed": [
-        "nikto_scan http://host.docker.internal:3000",
-        "sqlmap_scan http://host.docker.internal:3000/admin"
-      ],
-      "findings": [
-        "Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.",
-        "SQLMap indicated that no injectable parameters were found in the /admin URL."
-      ],
-      "next_targets": [
-        "http://host.docker.internal:3000/admin",
-        "http://host.docker.internal:3000/debug"
-      ],
-      "warnings": [
-        "Honeypot suspicion due to lack of dynamic parameters on /admin and other endpoints revealed by SQLMap.",
-        "Operational risks remain due to visible potential flags from Nikto indicating sensitive files."
-      ],
-      "raw_output_snippet": "Nikto found potential files like /admin/ and /wp-config.php that could contain sensitive data. SQLMap confirmed no injectable parameters in /admin."
-    },
-    {
-      "step": 5,
-      "task": "You are running offensive step 5/5.\nBase target: http://host.docker.internal:3000\n\nContext from memory:\nStep 1: Performed a service detection scan on the target.\nStep 2: Executed directory brute force scan against the target URL.\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nFindings: No injectable parameters found on /signup.; Nikto revealed potential files and directories: /admin/, /login/, /debug/, and a wp-config.php file.; SQLMap indicated that no injectable parameters were found in the /admin URL.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory brute force and Nikto scans on the /admin endpoint.\",\n  \"commands_executed\": [\n    \"dirb http://host.docker.internal:3000/admin /usr/share/dirb/wordlists/common.txt -o /tmp/admin_dirb.txt\",\n    \"nikto -h http://host.docker.internal:3000/admin -output /tmp/nikto_admin_report.txt\"\n  ],\n  \"findings\": [\n    \"Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.\",\n    \"No items found in directory brute force scan against /admin.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin/login\",\n    \"http://host.docker.internal:3000/admin/backup\",\n    \"http://host.docker.internal:3000/admin/phpmyadmin\"\n  ],\n  \"warnings\": [\n    \"No honeypot indications detected, but proceed with caution on sensitive endpoints.\"\n  ],\n  \"raw_output_snippet\": \"Nikto reported the absence of anti-clickjacking X-Frame-Options and X-Content-Type-Options headers for the /admin endpoint, which could pose security risks.\"\n}\n```",
-      "action_summary": "Executed directory brute force and Nikto scans on the /admin endpoint.",
-      "commands_executed": [
-        "dirb http://host.docker.internal:3000/admin /usr/share/dirb/wordlists/common.txt -o /tmp/admin_dirb.txt",
-        "nikto -h http://host.docker.internal:3000/admin -output /tmp/nikto_admin_report.txt"
-      ],
-      "findings": [
-        "Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.",
-        "No items found in directory brute force scan against /admin."
-      ],
-      "next_targets": [
-        "http://host.docker.internal:3000/admin/login",
-        "http://host.docker.internal:3000/admin/backup",
-        "http://host.docker.internal:3000/admin/phpmyadmin"
-      ],
-      "warnings": [
-        "No honeypot indications detected, but proceed with caution on sensitive endpoints."
-      ],
-      "raw_output_snippet": "Nikto reported the absence of anti-clickjacking X-Frame-Options and X-Content-Type-Options headers for the /admin endpoint, which could pose security risks."
+      "raw_output_snippet": "Nikto detected: The anti-clickjacking X-Frame-Options header is not present. SQLMap found 404 errors on both /admin/login and /admin/backup."
     },
     {
       "step": 1,
-      "task": "You are running offensive step 1/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 2: Executed directory brute force scan against the target URL.\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nFindings: SQLMap indicated that no injectable parameters were found in the /admin URL.; Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.; No items found in directory brute force scan against /admin.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "{\n  \"action_summary\": \"Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\",\n  \"commands_executed\": [\n    \"nmap -sV -Pn http://host.docker.internal:3000\",\n    \"nmap -sV -Pn http://host.docker.internal:3000/env\",\n    \"nmap -sV -Pn http://host.docker.internal:3000/login\"\n  ],\n  \"findings\": [\n    \"Nmap scans did not execute due to incorrect target format.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000\",\n    \"http://host.docker.internal:3000/env\",\n    \"http://host.docker.internal:3000/login\"\n  ],\n  \"warnings\": [\n    \"Ensure that the URL format is correct for network scanning.\"\n  ],\n  \"raw_output_snippet\": \"Nmap was unable to split netmask from the target expression, resulting in 0 hosts scanned.\"\n}",
-      "action_summary": "Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.",
+      "task": "Channel: SYSTEM\nStep 1/5\nPrimary target: ssh://localhost:22\nActive honeypots: Cowrie[SSH \u00b7 Telnet], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], Heralding[SMTP \u00b7 DB \u00b7 VNC]\n\nContext from memory:\nWEB step 3: Conducted Nikto scans on /signup, /debug, and /admin endpoints revealing several security misconfigurations.\nWEB step 4: Executed SQLMap scans on the /admin/login and /debug endpoints, both resulting in 404 errors.\nWEB step 5: Executed directory brute force scan on the /admin/backup endpoint with no findings.\nWEB step 1: Executed HTTP probes and scans on admin endpoints.\nFindings: Gobuster returned no directories for /admin.; Nikto detected missing security headers on /admin.; SQLMap found 404 errors on both /admin/login and /admin/backup.\nTarget queue: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/admin/login, http://host.docker.internal:3000/admin/backup\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Conducted port scan and banner grabs on SSH.\",\n  \"commands_executed\": [\n    \"nmap -sV localhost:22\",\n    \"hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://localhost\",\n    \"cat /etc/issue\",\n    \"whoami\"\n  ],\n  \"findings\": [\n    \"SSH port 22 is closed.\",\n    \"Banner: Kali GNU/Linux Rolling\",\n    \"User: root\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"Potential honeypot risk with SSH service.\"\n  ],\n  \"raw_output_snippet\": \"SSH port 22 is closed. Banner: Kali GNU/Linux Rolling. User: root\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Conducted port scan and banner grabs on SSH.",
       "commands_executed": [
-        "nmap -sV -Pn http://host.docker.internal:3000",
-        "nmap -sV -Pn http://host.docker.internal:3000/env",
-        "nmap -sV -Pn http://host.docker.internal:3000/login"
+        "nmap -sV localhost:22",
+        "hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://localhost",
+        "cat /etc/issue",
+        "whoami"
       ],
       "findings": [
-        "Nmap scans did not execute due to incorrect target format."
+        "SSH port 22 is closed.",
+        "Banner: Kali GNU/Linux Rolling",
+        "User: root"
       ],
-      "next_targets": [
-        "http://host.docker.internal:3000",
-        "http://host.docker.internal:3000/env",
-        "http://host.docker.internal:3000/login"
-      ],
+      "next_targets": [],
       "warnings": [
-        "Ensure that the URL format is correct for network scanning."
+        "Potential honeypot risk with SSH service."
       ],
-      "raw_output_snippet": "Nmap was unable to split netmask from the target expression, resulting in 0 hosts scanned."
+      "raw_output_snippet": "SSH port 22 is closed. Banner: Kali GNU/Linux Rolling. User: root"
     },
     {
       "step": 2,
-      "task": "You are running offensive step 2/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 3: Executed SQL injection scans on the /login and /signup endpoints with no vulnerabilities found.\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nFindings: Nikto reported absence of X-Frame-Options and X-Content-Type-Options headers.; No items found in directory brute force scan against /admin.; Nmap scans did not execute due to incorrect target format.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\",\n  \"commands_executed\": [\n    \"nmap_scan {\\\"target\\\":\\\"host.docker.internal\\\",\\\"scan_type\\\":\\\"-sV\\\",\\\"ports\\\":\\\"3000\\\"}\",\n    \"sqlmap_scan {\\\"url\\\":\\\"http://host.docker.internal:3000/login\\\",\\\"data\\\":\\\"username=admin&password=admin\\\",\\\"additional_args\\\":\\\"--risk=2 --level=2\\\"}\",\n    \"sqlmap_scan {\\\"url\\\":\\\"http://host.docker.internal:3000/signup\\\",\\\"data\\\":\\\"username=admin&email=test@example.com&password=admin\\\",\\\"additional_args\\\":\\\"--risk=2 --level=2\\\"}\"\n  ],\n  \"findings\": [\n    \"Nmap scan confirms port 3000 is open and running Node.js (Express middleware).\",\n    \"SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/dashboard\"\n  ],\n  \"warnings\": [\n    \"The application may have a WAF or IPS in place, complicating further testing.\",\n    \"Multiple HTTP 500 errors observed during SQLMap scans indicate potential instability.\"\n  ],\n  \"raw_output_snippet\": \"Nmap scan report for host.docker.internal indicates port 3000 is open, running Node.js. SQLMap testing revealed that the parameters in /login and /signup do not appear to be injectable.\"\n}\n```",
-      "action_summary": "Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.",
+      "task": "Channel: WEB\nStep 2/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 4: Executed SQLMap scans on the /admin/login and /debug endpoints, both resulting in 404 errors.\nWEB step 5: Executed directory brute force scan on the /admin/backup endpoint with no findings.\nWEB step 1: Executed HTTP probes and scans on admin endpoints.\nSYSTEM step 1: Conducted port scan and banner grabs on SSH.\nFindings: SSH port 22 is closed.; Banner: Kali GNU/Linux Rolling; User: root\nTarget queue: http://host.docker.internal:3000/admin, http://host.docker.internal:3000/admin/login, http://host.docker.internal:3000/admin/backup\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory brute-forcing and Nikto scan on primary target\",\n  \"commands_executed\": [\n    \"gobuster_scan: http://host.docker.internal:3000 dir -w /usr/share/dirb/wordlists/common.txt -t 50\",\n    \"nikto_scan: http://host.docker.internal:3000\"\n  ],\n  \"findings\": [\n    \"/admin, /backup-db, /login, /debug found. X-Powered-By: Express.\",\n    \"Potentially sensitive files: /#wp-config.php#.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/login\",\n    \"http://host.docker.internal:3000/backup-db\"\n  ],\n  \"warnings\": [\"Consider potential honeypot triggering with sensitive headers.\"],\n  \"raw_output_snippet\": \"Nikto: The anti-clickjacking X-Frame-Options header is not present. /#wp-config.php#: #wp-config.php# file found.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed directory brute-forcing and Nikto scan on primary target",
       "commands_executed": [
-        "nmap_scan {\"target\":\"host.docker.internal\",\"scan_type\":\"-sV\",\"ports\":\"3000\"}",
-        "sqlmap_scan {\"url\":\"http://host.docker.internal:3000/login\",\"data\":\"username=admin&password=admin\",\"additional_args\":\"--risk=2 --level=2\"}",
-        "sqlmap_scan {\"url\":\"http://host.docker.internal:3000/signup\",\"data\":\"username=admin&email=test@example.com&password=admin\",\"additional_args\":\"--risk=2 --level=2\"}"
+        "gobuster_scan: http://host.docker.internal:3000 dir -w /usr/share/dirb/wordlists/common.txt -t 50",
+        "nikto_scan: http://host.docker.internal:3000"
       ],
       "findings": [
-        "Nmap scan confirms port 3000 is open and running Node.js (Express middleware).",
-        "SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF."
-      ],
-      "next_targets": [
-        "http://host.docker.internal:3000/dashboard"
-      ],
-      "warnings": [
-        "The application may have a WAF or IPS in place, complicating further testing.",
-        "Multiple HTTP 500 errors observed during SQLMap scans indicate potential instability."
-      ],
-      "raw_output_snippet": "Nmap scan report for host.docker.internal indicates port 3000 is open, running Node.js. SQLMap testing revealed that the parameters in /login and /signup do not appear to be injectable."
-    },
-    {
-      "step": 3,
-      "task": "You are running offensive step 3/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 4: Executed Nikto and SQLMap scans on the target with findings related to potential vulnerabilities.\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nFindings: Nmap scans did not execute due to incorrect target format.; Nmap scan confirms port 3000 is open and running Node.js (Express middleware).; SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory scanning and Nikto scan on the target.\",\n  \"commands_executed\": [\n    \"dirb http://host.docker.internal:3000 /usr/share/dirb/wordlists/common.txt\",\n    \"nikto -h http://host.docker.internal:3000/env\"\n  ],\n  \"findings\": [\n    \"Discovered /admin and /backup-db endpoints returning 200 OK.\",\n    \"Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/backup-db\",\n    \"http://host.docker.internal:3000/env\"\n  ],\n  \"warnings\": [\n    \"Potentially sensitive information exposed at /env/#wp-config.php#.\",\n    \"Considerable number of endpoints discovered, indicating complex structure; honeypot flags may trigger.\"\n  ],\n  \"raw_output_snippet\": \"Nikto scan indicated missing X-Frame-Options and X-Content-Type-Options headers, posing vulnerability concerns. Additionally, sensitive file found at /env/#wp-config.php# could be critical for exploitation.\"\n}\n```",
-      "action_summary": "Executed directory scanning and Nikto scan on the target.",
-      "commands_executed": [
-        "dirb http://host.docker.internal:3000 /usr/share/dirb/wordlists/common.txt",
-        "nikto -h http://host.docker.internal:3000/env"
-      ],
-      "findings": [
-        "Discovered /admin and /backup-db endpoints returning 200 OK.",
-        "Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#."
+        "/admin, /backup-db, /login, /debug found. X-Powered-By: Express.",
+        "Potentially sensitive files: /#wp-config.php#."
       ],
       "next_targets": [
         "http://host.docker.internal:3000/admin",
-        "http://host.docker.internal:3000/backup-db",
-        "http://host.docker.internal:3000/env"
-      ],
-      "warnings": [
-        "Potentially sensitive information exposed at /env/#wp-config.php#.",
-        "Considerable number of endpoints discovered, indicating complex structure; honeypot flags may trigger."
-      ],
-      "raw_output_snippet": "Nikto scan indicated missing X-Frame-Options and X-Content-Type-Options headers, posing vulnerability concerns. Additionally, sensitive file found at /env/#wp-config.php# could be critical for exploitation."
-    },
-    {
-      "step": 4,
-      "task": "You are running offensive step 4/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 5: Executed directory brute force and Nikto scans on the /admin endpoint.\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nStep 3: Executed directory scanning and Nikto scan on the target.\nFindings: SQLMap did not find injectability in the /login and /signup endpoints, indicating possible protections such as WAF.; Discovered /admin and /backup-db endpoints returning 200 OK.; Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\",\n  \"commands_executed\": [\n    \"gobuster_scan url=http://host.docker.internal:3000 mode=dir wordlist=/usr/share/dirb/wordlists/common.txt additional_args=-t 50\",\n    \"nikto_scan target=http://host.docker.internal:3000/env additional_args=\"\n  ],\n  \"findings\": [\n    \"Identified several valid endpoints including /dashboard, /debug, and /source.\",\n    \"Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/env/#wp-config.php#\",\n    \"http://host.docker.internal:3000/dashboard\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Potentially sensitive file exposed: /env/#wp-config.php#.\",\n    \"Missing key HTTP headers may indicate exploitable security posture.\"\n  ],\n  \"raw_output_snippet\": \"Gobuster scanned and found endpoints such as /admin, /backup-db, /dashboard, and /debug, while Nikto highlighted missing security headers and flagged the wp-config.php file as exposed.\"\n}\n```",
-      "action_summary": "Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.",
-      "commands_executed": [
-        "gobuster_scan url=http://host.docker.internal:3000 mode=dir wordlist=/usr/share/dirb/wordlists/common.txt additional_args=-t 50",
-        "nikto_scan target=http://host.docker.internal:3000/env additional_args="
-      ],
-      "findings": [
-        "Identified several valid endpoints including /dashboard, /debug, and /source.",
-        "Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file."
-      ],
-      "next_targets": [
-        "http://host.docker.internal:3000/env/#wp-config.php#",
-        "http://host.docker.internal:3000/dashboard",
-        "http://host.docker.internal:3000/debug"
-      ],
-      "warnings": [
-        "Potentially sensitive file exposed: /env/#wp-config.php#.",
-        "Missing key HTTP headers may indicate exploitable security posture."
-      ],
-      "raw_output_snippet": "Gobuster scanned and found endpoints such as /admin, /backup-db, /dashboard, and /debug, while Nikto highlighted missing security headers and flagged the wp-config.php file as exposed."
-    },
-    {
-      "step": 5,
-      "task": "You are running offensive step 5/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 1: Attempted Nmap scans on the pending targets but encountered issues due to incorrect URLs.\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nStep 3: Executed directory scanning and Nikto scan on the target.\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nFindings: Nikto scan revealed missing security headers on /env and potential sensitive file leak at /env/#wp-config.php#.; Identified several valid endpoints including /dashboard, /debug, and /source.; Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\",\n  \"commands_executed\": [\n    \"sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --batch\",\n    \"nikto -h http://host.docker.internal:3000/env\"\n  ],\n  \"findings\": [\n    \"SQLMap identified no injectable parameters on the /login endpoint.\",\n    \"Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/source\"\n  ],\n  \"warnings\": [\n    \"All scanned parameters on /login appear non-injectable, may indicate WAF protection.\",\n    \"Missing security headers could lead to potential vulnerabilities.\"\n  ],\n  \"raw_output_snippet\": \"Nikto revealed the anti-clickjacking X-Frame-Options header is not present, and the X-Content-Type-Options header is also missing, which may increase vulnerability risks.\"\n}\n```",
-      "action_summary": "Executed SQLMap and Nikto scans on targets to identify vulnerabilities.",
-      "commands_executed": [
-        "sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --batch",
-        "nikto -h http://host.docker.internal:3000/env"
-      ],
-      "findings": [
-        "SQLMap identified no injectable parameters on the /login endpoint.",
-        "Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options."
-      ],
-      "next_targets": [
         "http://host.docker.internal:3000/debug",
-        "http://host.docker.internal:3000/source"
+        "http://host.docker.internal:3000/login",
+        "http://host.docker.internal:3000/backup-db"
       ],
       "warnings": [
-        "All scanned parameters on /login appear non-injectable, may indicate WAF protection.",
-        "Missing security headers could lead to potential vulnerabilities."
+        "Consider potential honeypot triggering with sensitive headers."
       ],
-      "raw_output_snippet": "Nikto revealed the anti-clickjacking X-Frame-Options header is not present, and the X-Content-Type-Options header is also missing, which may increase vulnerability risks."
-    },
-    {
-      "step": 1,
-      "task": "You are running offensive step 1/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 2: Executed Nmap and SQLMap scans on the target to gather further reconnaissance and check for vulnerabilities.\nStep 3: Executed directory scanning and Nikto scan on the target.\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nFindings: Nikto revealed missing security headers and confirmed the presence of sensitive wp-config.php file.; SQLMap identified no injectable parameters on the /login endpoint.; Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nmap and SQLMap scans on localhost.\",\n  \"commands_executed\": [\n    \"nmap_scan localhost -sV -p80\",\n    \"sqlmap_scan http://localhost:3000/login\"\n  ],\n  \"findings\": [\n    \"Nmap revealed port 80 closed on localhost.\",\n    \"SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.\"\n  ],\n  \"next_targets\": [\"http://localhost:3000/env\", \"http://localhost:3000/login\"],\n  \"warnings\": [\n    \"No open ports detected, potential misconfiguration.\",\n    \"Connection issues with SQLMap may indicate security measures.\"\n  ],\n  \"raw_output_snippet\": \"Nmap scan revealed port 80 closed on localhost. SQLMap encountered 'Connection refused' while attempting to reach the /login endpoint, indicating a potential issue with target accessibility.\"\n}\n```",
-      "action_summary": "Executed Nmap and SQLMap scans on localhost.",
-      "commands_executed": [
-        "nmap_scan localhost -sV -p80",
-        "sqlmap_scan http://localhost:3000/login"
-      ],
-      "findings": [
-        "Nmap revealed port 80 closed on localhost.",
-        "SQLMap could not connect to the /login endpoint, reporting 'Connection refused'."
-      ],
-      "next_targets": [
-        "http://localhost:3000/env",
-        "http://localhost:3000/login"
-      ],
-      "warnings": [
-        "No open ports detected, potential misconfiguration.",
-        "Connection issues with SQLMap may indicate security measures."
-      ],
-      "raw_output_snippet": "Nmap scan revealed port 80 closed on localhost. SQLMap encountered 'Connection refused' while attempting to reach the /login endpoint, indicating a potential issue with target accessibility."
+      "raw_output_snippet": "Nikto: The anti-clickjacking X-Frame-Options header is not present. /#wp-config.php#: #wp-config.php# file found."
     },
     {
       "step": 2,
-      "task": "You are running offensive step 2/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 3: Executed directory scanning and Nikto scan on the target.\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nStep 1: Executed Nmap and SQLMap scans on localhost.\nFindings: Nikto revealed missing security headers on /env, including X-Frame-Options and X-Content-Type-Options.; Nmap revealed port 80 closed on localhost.; SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "{\n  \"action_summary\": \"Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\",\n  \"commands_executed\": [\n    \"sqlmap_scan --url http://host.docker.internal:3000/env --level=1 --risk=1 --batch\",\n    \"sqlmap_scan --url http://host.docker.internal:3000/login --level=1 --risk=1 --batch\"\n  ],\n  \"findings\": [\n    \"Both /env and /login endpoints had no injectable parameters according to SQLMap scans.\",\n    \"HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"No vulnerabilities were detected, indicating a possible hardening against SQL injection.\",\n    \"The repeated 404 errors raise caution about potential honeypot implementation.\"\n  ],\n  \"raw_output_snippet\": \"SQLMap indicated that all tested parameters do not appear to be injectable for both /env and /login, prompting a warning to increase testing parameters or check for WAF.\"\n}",
-      "action_summary": "Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.",
+      "task": "Channel: SYSTEM\nStep 2/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 5: Executed directory brute force scan on the /admin/backup endpoint with no findings.\nWEB step 1: Executed HTTP probes and scans on admin endpoints.\nSYSTEM step 1: Conducted port scan and banner grabs on SSH.\nWEB step 2: Executed directory brute-forcing and Nikto scan on primary target\nFindings: User: root; /admin, /backup-db, /login, /debug found. X-Powered-By: Express.; Potentially sensitive files: /#wp-config.php#.\nTarget queue: http://host.docker.internal:3000/admin/backup, http://host.docker.internal:3000/admin/phpmyadmin, http://host.docker.internal:3000/dashboard\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Attempted SSH scan and brute force login on localhost\",\n  \"commands_executed\": [\n    \"nmap localhost -sV -p 22\",\n    \"hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://localhost\"\n  ],\n  \"findings\": [\n    \"Port 22 closed, no SSH service detected.\",\n    \"Hydra error: Password file /usr/share/wordlists/rockyou.txt not found.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"Target is localhost; drone actions limited.\",\n    \"Potential honeypot triggers with SSH attempts.\"\n  ],\n  \"raw_output_snippet\": \"Port 22 closed ssh; Error: Password file not found.\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Attempted SSH scan and brute force login on localhost",
       "commands_executed": [
-        "sqlmap_scan --url http://host.docker.internal:3000/env --level=1 --risk=1 --batch",
-        "sqlmap_scan --url http://host.docker.internal:3000/login --level=1 --risk=1 --batch"
+        "nmap localhost -sV -p 22",
+        "hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://localhost"
       ],
       "findings": [
-        "Both /env and /login endpoints had no injectable parameters according to SQLMap scans.",
-        "HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs."
+        "Port 22 closed, no SSH service detected.",
+        "Hydra error: Password file /usr/share/wordlists/rockyou.txt not found."
       ],
       "next_targets": [],
       "warnings": [
-        "No vulnerabilities were detected, indicating a possible hardening against SQL injection.",
-        "The repeated 404 errors raise caution about potential honeypot implementation."
+        "Target is localhost; drone actions limited.",
+        "Potential honeypot triggers with SSH attempts."
       ],
-      "raw_output_snippet": "SQLMap indicated that all tested parameters do not appear to be injectable for both /env and /login, prompting a warning to increase testing parameters or check for WAF."
+      "raw_output_snippet": "Port 22 closed ssh; Error: Password file not found."
     },
     {
       "step": 3,
-      "task": "You are running offensive step 3/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 4: Executed Gobuster and Nikto scans to enumerate directories and identify vulnerabilities.\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nStep 1: Executed Nmap and SQLMap scans on localhost.\nStep 2: Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\nFindings: SQLMap could not connect to the /login endpoint, reporting 'Connection refused'.; Both /env and /login endpoints had no injectable parameters according to SQLMap scans.; HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "{\n  \"action_summary\": \"Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.\",\n  \"commands_executed\": [\n    \"sqlmap --url=http://host.docker.internal:3000/env --level=5 --risk=3\",\n    \"sqlmap --url=http://host.docker.internal:3000/login --level=5 --risk=3\"\n  ],\n  \"findings\": [\n    \"No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.\",\n    \"HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"Multiple 404 errors suggest potential honeypot signals or misconfiguration.\",\n    \"No parameters were found for injection attempts, indicating a low likelihood of success.\"\n  ],\n  \"raw_output_snippet\": \"No injectable parameters found for both /env and /login endpoints... HTTP error codes detected during run: 404 (Not Found) - 3 times.\"\n}",
-      "action_summary": "Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.",
+      "task": "Channel: WEB\nStep 3/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 1: Executed HTTP probes and scans on admin endpoints.\nSYSTEM step 1: Conducted port scan and banner grabs on SSH.\nWEB step 2: Executed directory brute-forcing and Nikto scan on primary target\nSYSTEM step 2: Attempted SSH scan and brute force login on localhost\nFindings: Potentially sensitive files: /#wp-config.php#.; Port 22 closed, no SSH service detected.; Hydra error: Password file /usr/share/wordlists/rockyou.txt not found.\nTarget queue: http://host.docker.internal:3000/admin/backup, http://host.docker.internal:3000/admin/phpmyadmin, http://host.docker.internal:3000/dashboard\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory enumeration, vulnerability scan, and SQL injection tests.\",\n  \"commands_executed\": [\n    \"gobuster_scan: {\\\"url\\\":\\\"http://host.docker.internal:3000\\\",\\\"mode\\\":\\\"dir\\\",\\\"wordlist\\\":\\\"/usr/share/dirb/wordlists/common.txt\\\"}\",\n    \"nikto_scan: {\\\"target\\\":\\\"http://host.docker.internal:3000\\\"}\",\n    \"sqlmap_scan: {\\\"url\\\":\\\"http://host.docker.internal:3000/admin/phpmyadmin\\\",\\\"data\\\":\\\"\\\"}\"\n  ],\n  \"findings\": [\n    \"Sensitive files found: /#wp-config.php#.\",\n    \"Interesting endpoints: /admin/, /login/, /debug/.\",\n    \"SQL injection attempt returned 404 for /admin/phpmyadmin.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin/\",\n    \"http://host.docker.internal:3000/debug/\",\n    \"http://host.docker.internal:3000/login/\"\n  ],\n  \"warnings\": [\n    \"Potential honeypot triggers detected.\",\n    \"404 errors indicate possible misconfiguration or honeypot.\"\n  ],\n  \"raw_output_snippet\": \"Gobuster found: /admin/, /backup-db/, /dashboard/; Nikto warnings on headers; SQLmap found 404 on /phpmyadmin.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed directory enumeration, vulnerability scan, and SQL injection tests.",
       "commands_executed": [
-        "sqlmap --url=http://host.docker.internal:3000/env --level=5 --risk=3",
-        "sqlmap --url=http://host.docker.internal:3000/login --level=5 --risk=3"
+        "gobuster_scan: {\"url\":\"http://host.docker.internal:3000\",\"mode\":\"dir\",\"wordlist\":\"/usr/share/dirb/wordlists/common.txt\"}",
+        "nikto_scan: {\"target\":\"http://host.docker.internal:3000\"}",
+        "sqlmap_scan: {\"url\":\"http://host.docker.internal:3000/admin/phpmyadmin\",\"data\":\"\"}"
       ],
       "findings": [
-        "No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.",
-        "HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs."
-      ],
-      "next_targets": [],
-      "warnings": [
-        "Multiple 404 errors suggest potential honeypot signals or misconfiguration.",
-        "No parameters were found for injection attempts, indicating a low likelihood of success."
-      ],
-      "raw_output_snippet": "No injectable parameters found for both /env and /login endpoints... HTTP error codes detected during run: 404 (Not Found) - 3 times."
-    },
-    {
-      "step": 4,
-      "task": "You are running offensive step 4/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 5: Executed SQLMap and Nikto scans on targets to identify vulnerabilities.\nStep 1: Executed Nmap and SQLMap scans on localhost.\nStep 2: Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\nStep 3: Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.\nFindings: HTTP error codes 404 detected during the scans indicated missing endpoints or incorrect URLs.; No injectable parameters found for both /env and /login endpoints, evidenced by SQLMap warnings.; HTTP errors 404 detected during scans indicate missing endpoints or incorrectly specified URLs.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "```json\n{\n  \"action_summary\": \"Executed Nikto scan on http://host.docker.internal:3000 to identify vulnerabilities.\",\n  \"commands_executed\": [\"nikto_scan target=http://host.docker.internal:3000\"],\n  \"findings\": [\n    \"X-Frame-Options header is missing, potentially vulnerable to clickjacking.\",\n    \"X-Content-Type-Options header is not set, allowing MIME type rendering issues.\",\n    \"Possible sensitive file discovered: #wp-config.php# stored in the server.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin/\",\n    \"http://host.docker.internal:3000/login/\",\n    \"http://host.docker.internal:3000/debug/\"\n  ],\n  \"warnings\": [\n    \"Potential honeypot risk on /admin/, /debug/, given their administrative nature.\"\n  ],\n  \"raw_output_snippet\": \"Nikto found missing X-Frame-Options and X-Content-Type-Options headers, along with a potentially sensitive file: #wp-config.php#.\"\n}\n```",
-      "action_summary": "Executed Nikto scan on http://host.docker.internal:3000 to identify vulnerabilities.",
-      "commands_executed": [
-        "nikto_scan target=http://host.docker.internal:3000"
-      ],
-      "findings": [
-        "X-Frame-Options header is missing, potentially vulnerable to clickjacking.",
-        "X-Content-Type-Options header is not set, allowing MIME type rendering issues.",
-        "Possible sensitive file discovered: #wp-config.php# stored in the server."
+        "Sensitive files found: /#wp-config.php#.",
+        "Interesting endpoints: /admin/, /login/, /debug/.",
+        "SQL injection attempt returned 404 for /admin/phpmyadmin."
       ],
       "next_targets": [
         "http://host.docker.internal:3000/admin/",
-        "http://host.docker.internal:3000/login/",
-        "http://host.docker.internal:3000/debug/"
+        "http://host.docker.internal:3000/debug/",
+        "http://host.docker.internal:3000/login/"
       ],
       "warnings": [
-        "Potential honeypot risk on /admin/, /debug/, given their administrative nature."
+        "Potential honeypot triggers detected.",
+        "404 errors indicate possible misconfiguration or honeypot."
       ],
-      "raw_output_snippet": "Nikto found missing X-Frame-Options and X-Content-Type-Options headers, along with a potentially sensitive file: #wp-config.php#."
+      "raw_output_snippet": "Gobuster found: /admin/, /backup-db/, /dashboard/; Nikto warnings on headers; SQLmap found 404 on /phpmyadmin."
     },
     {
-      "step": 5,
-      "task": "You are running offensive step 5/5.\nBase target: http://localhost:3000\n\nContext from memory:\nStep 1: Executed Nmap and SQLMap scans on localhost.\nStep 2: Executed SQLMap scans on /env and /login endpoints to identify SQL injection vulnerabilities.\nStep 3: Executed SQLMap scans on /env and /login endpoints for SQL injection vulnerabilities.\nStep 4: Executed Nikto scan on http://host.docker.internal:3000 to identify vulnerabilities.\nFindings: X-Frame-Options header is missing, potentially vulnerable to clickjacking.; X-Content-Type-Options header is not set, allowing MIME type rendering issues.; Possible sensitive file discovered: #wp-config.php# stored in the server.\nTarget queue: http://host.docker.internal:3000, http://host.docker.internal:3000/env, http://host.docker.internal:3000/login\n\nObjectives:\n1. Use Kali MCP tools to execute reconnaissance or exploit commands.\n2. Prioritize pending targets mentioned above before inventing new ones.\n3. Keep outputs concise and highlight artifacts worth saving.\n4. Avoid obvious honeypots or noisy scans unless risk is acceptable.\n\nReturn strictly the JSON contract described in your system instructions.",
-      "raw_output": "{\n  \"action_summary\": \"Executed SQLMap scans on /env and /login endpoints with no injectable parameters found.\",\n  \"commands_executed\": [\n    \"sqlmap --url http://host.docker.internal:3000/env --risk=3 --level=5 --dump\",\n    \"sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --dump\"\n  ],\n  \"findings\": [\n    \"No injectable parameters found on /env and /login endpoints.\",\n    \"HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\"potential WAF or protection mechanism may exist on the target.\"],\n  \"raw_output_snippet\": \"All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times.\"\n}",
-      "action_summary": "Executed SQLMap scans on /env and /login endpoints with no injectable parameters found.",
+      "step": 3,
+      "task": "Channel: SYSTEM\nStep 3/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 1: Conducted port scan and banner grabs on SSH.\nWEB step 2: Executed directory brute-forcing and Nikto scan on primary target\nSYSTEM step 2: Attempted SSH scan and brute force login on localhost\nWEB step 3: Executed directory enumeration, vulnerability scan, and SQL injection tests.\nFindings: Sensitive files found: /#wp-config.php#.; Interesting endpoints: /admin/, /login/, /debug/.; SQL injection attempt returned 404 for /admin/phpmyadmin.\nTarget queue: http://host.docker.internal:3000/admin/backup, http://host.docker.internal:3000/admin/phpmyadmin, http://host.docker.internal:3000/dashboard\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Scanned SSH on localhost and performed quick command execution.\",\n  \"commands_executed\": [\n    \"nmap -sV -p 22 localhost\",\n    \"hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://localhost\",\n    \"whoami\"\n  ],\n  \"findings\": [\n    \"Port 22 closed.\",\n    \"Failed to find wordlist for Hydra.\",\n    \"Command 'whoami' returned: root.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"Port 22 is closed, indicating potential honeypot or firewall.\",\n    \"Hydra wordlist not found, limited attack potential.\"\n  ],\n  \"raw_output_snippet\": \"Nmap scan report for localhost (127.0.0.1): 22/tcp closed ssh. Command 'whoami' returned: root.\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Scanned SSH on localhost and performed quick command execution.",
       "commands_executed": [
-        "sqlmap --url http://host.docker.internal:3000/env --risk=3 --level=5 --dump",
-        "sqlmap --url http://host.docker.internal:3000/login --risk=3 --level=5 --dump"
+        "nmap -sV -p 22 localhost",
+        "hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://localhost",
+        "whoami"
       ],
       "findings": [
-        "No injectable parameters found on /env and /login endpoints.",
-        "HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations."
+        "Port 22 closed.",
+        "Failed to find wordlist for Hydra.",
+        "Command 'whoami' returned: root."
       ],
       "next_targets": [],
       "warnings": [
-        "potential WAF or protection mechanism may exist on the target."
+        "Port 22 is closed, indicating potential honeypot or firewall.",
+        "Hydra wordlist not found, limited attack potential."
       ],
-      "raw_output_snippet": "All tested parameters do not appear to be injectable. HTTP error codes detected during run: 404 (Not Found) - 3 times."
+      "raw_output_snippet": "Nmap scan report for localhost (127.0.0.1): 22/tcp closed ssh. Command 'whoami' returned: root."
+    },
+    {
+      "step": 4,
+      "task": "Channel: WEB\nStep 4/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 2: Executed directory brute-forcing and Nikto scan on primary target\nSYSTEM step 2: Attempted SSH scan and brute force login on localhost\nWEB step 3: Executed directory enumeration, vulnerability scan, and SQL injection tests.\nSYSTEM step 3: Scanned SSH on localhost and performed quick command execution.\nFindings: Port 22 closed.; Failed to find wordlist for Hydra.; Command 'whoami' returned: root.\nTarget queue: http://host.docker.internal:3000/admin/backup, http://host.docker.internal:3000/admin/phpmyadmin, http://host.docker.internal:3000/dashboard\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed web probing and vulnerability scans.\",\n  \"commands_executed\": [\n    \"gobuster_scan http://host.docker.internal:3000 dir -t 50 -w /usr/share/dirb/wordlists/common.txt\",\n    \"nikto_scan http://host.docker.internal:3000\",\n    \"sqlmap_scan http://host.docker.internal:3000/admin/phpmyadmin --level=3 --risk=3\"\n  ],\n  \"findings\": [\n    \"Gobuster found multiple interesting endpoints: /admin, /backup-db, /login.\",\n    \"Nikto revealed missing security headers and potential debug directory.\",\n    \"SQLmap found 404 error on /admin/phpmyadmin; no injectable parameters.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/login\",\n    \"http://host.docker.internal:3000/debug\"\n  ],\n  \"warnings\": [\n    \"Honeypots detected; proceed with caution and avoid noisy scans.\"\n  ],\n  \"raw_output_snippet\": \"Gobuster found: /admin (200), /backup-db (200), /login (200); Nikto: missing headers; SQLmap: 404.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed web probing and vulnerability scans.",
+      "commands_executed": [
+        "gobuster_scan http://host.docker.internal:3000 dir -t 50 -w /usr/share/dirb/wordlists/common.txt",
+        "nikto_scan http://host.docker.internal:3000",
+        "sqlmap_scan http://host.docker.internal:3000/admin/phpmyadmin --level=3 --risk=3"
+      ],
+      "findings": [
+        "Gobuster found multiple interesting endpoints: /admin, /backup-db, /login.",
+        "Nikto revealed missing security headers and potential debug directory.",
+        "SQLmap found 404 error on /admin/phpmyadmin; no injectable parameters."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin",
+        "http://host.docker.internal:3000/login",
+        "http://host.docker.internal:3000/debug"
+      ],
+      "warnings": [
+        "Honeypots detected; proceed with caution and avoid noisy scans."
+      ],
+      "raw_output_snippet": "Gobuster found: /admin (200), /backup-db (200), /login (200); Nikto: missing headers; SQLmap: 404."
+    },
+    {
+      "step": 4,
+      "task": "Channel: SYSTEM\nStep 4/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 2: Attempted SSH scan and brute force login on localhost\nWEB step 3: Executed directory enumeration, vulnerability scan, and SQL injection tests.\nSYSTEM step 3: Scanned SSH on localhost and performed quick command execution.\nWEB step 4: Executed web probing and vulnerability scans.\nFindings: Gobuster found multiple interesting endpoints: /admin, /backup-db, /login.; Nikto revealed missing security headers and potential debug directory.; SQLmap found 404 error on /admin/phpmyadmin; no injectable parameters.\nTarget queue: http://host.docker.internal:3000/admin/phpmyadmin, http://host.docker.internal:3000/dashboard, http://host.docker.internal:3000/backup-db\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.\",\n  \"commands_executed\": [\"nmap -sV -p 22 localhost\", \"hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://localhost\"],\n  \"findings\": [\"SSH port 22 is closed.\", \"Hydra could not find the wordlist.\"],\n  \"next_targets\": [\"localhost:22\"],\n  \"warnings\": [\"SSH port is closed; potential honeypot detection.\"],\n  \"raw_output_snippet\": \"Nmap scan report for localhost: 22/tcp closed ssh.\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.",
+      "commands_executed": [
+        "nmap -sV -p 22 localhost",
+        "hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://localhost"
+      ],
+      "findings": [
+        "SSH port 22 is closed.",
+        "Hydra could not find the wordlist."
+      ],
+      "next_targets": [
+        "localhost:22"
+      ],
+      "warnings": [
+        "SSH port is closed; potential honeypot detection."
+      ],
+      "raw_output_snippet": "Nmap scan report for localhost: 22/tcp closed ssh."
+    },
+    {
+      "step": 5,
+      "task": "Channel: WEB\nStep 5/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 3: Executed directory enumeration, vulnerability scan, and SQL injection tests.\nSYSTEM step 3: Scanned SSH on localhost and performed quick command execution.\nWEB step 4: Executed web probing and vulnerability scans.\nSYSTEM step 4: Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.\nFindings: Nikto revealed missing security headers and potential debug directory.; SQLmap found 404 error on /admin/phpmyadmin; no injectable parameters.; Hydra could not find the wordlist.\nTarget queue: http://host.docker.internal:3000/dashboard, http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory enumeration, SQL injection tests and security scan.\",\n  \"commands_executed\": [\n    \"gobuster_scan args: {url: 'http://host.docker.internal:3000', mode: 'dir', additional_args: '-x php,html,txt'}\",\n    \"sqlmap_scan args: {url: 'http://host.docker.internal:3000/dashboard', additional_args: '--batch --risk=3 --level=5'}\",\n    \"nikto_scan args: {target: 'http://host.docker.internal:3000', additional_args: ''}\"\n  ],\n  \"findings\": [\n    \"/admin, /backup-db, /debug paths discovered; /dashboard not injectable; missing security headers.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/login\",\n    \"http://host.docker.internal:3000/#wp-config.php#\"\n  ],\n  \"warnings\": [\n    \"Found potential debug directory; missing security headers may pose risks.\"\n  ],\n  \"raw_output_snippet\": \"Nikto revealed missing security headers; SQLmap found no injectable parameters.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed directory enumeration, SQL injection tests and security scan.",
+      "commands_executed": [
+        "gobuster_scan args: {url: 'http://host.docker.internal:3000', mode: 'dir', additional_args: '-x php,html,txt'}",
+        "sqlmap_scan args: {url: 'http://host.docker.internal:3000/dashboard', additional_args: '--batch --risk=3 --level=5'}",
+        "nikto_scan args: {target: 'http://host.docker.internal:3000', additional_args: ''}"
+      ],
+      "findings": [
+        "/admin, /backup-db, /debug paths discovered; /dashboard not injectable; missing security headers."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/debug",
+        "http://host.docker.internal:3000/login",
+        "http://host.docker.internal:3000/#wp-config.php#"
+      ],
+      "warnings": [
+        "Found potential debug directory; missing security headers may pose risks."
+      ],
+      "raw_output_snippet": "Nikto revealed missing security headers; SQLmap found no injectable parameters."
+    },
+    {
+      "step": 5,
+      "task": "Channel: SYSTEM\nStep 5/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 3: Scanned SSH on localhost and performed quick command execution.\nWEB step 4: Executed web probing and vulnerability scans.\nSYSTEM step 4: Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.\nWEB step 5: Executed directory enumeration, SQL injection tests and security scan.\nFindings: SQLmap found 404 error on /admin/phpmyadmin; no injectable parameters.; Hydra could not find the wordlist.; /admin, /backup-db, /debug paths discovered; /dashboard not injectable; missing security headers.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Port sweep on localhost SSH service, attempted command execution.\",\n  \"commands_executed\": [\"nmap -p 22 localhost\", \"ssh localhost 'whoami; ls /tmp; cat flag*'\"],\n  \"findings\": [\"SSH port 22 is closed; command execution failed due to missing SSH tool.\"],\n  \"next_targets\": [\"http://host.docker.internal:3000/backup-db\"],\n  \"warnings\": [\"Honeypot risk evident; SSH service not operable.\"],\n  \"raw_output_snippet\": \"Nmap scan report for localhost: PORT 22/tcp closed ssh.\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Port sweep on localhost SSH service, attempted command execution.",
+      "commands_executed": [
+        "nmap -p 22 localhost",
+        "ssh localhost 'whoami; ls /tmp; cat flag*'"
+      ],
+      "findings": [
+        "SSH port 22 is closed; command execution failed due to missing SSH tool."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/backup-db"
+      ],
+      "warnings": [
+        "Honeypot risk evident; SSH service not operable."
+      ],
+      "raw_output_snippet": "Nmap scan report for localhost: PORT 22/tcp closed ssh."
+    },
+    {
+      "step": 1,
+      "task": "Channel: WEB\nStep 1/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 4: Executed web probing and vulnerability scans.\nSYSTEM step 4: Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.\nWEB step 5: Executed directory enumeration, SQL injection tests and security scan.\nSYSTEM step 5: Port sweep on localhost SSH service, attempted command execution.\nFindings: Hydra could not find the wordlist.; /admin, /backup-db, /debug paths discovered; /dashboard not injectable; missing security headers.; SSH port 22 is closed; command execution failed due to missing SSH tool.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Initiated further HTTP probing on discovered paths.\",\n  \"commands_executed\": [\"curl -I http://host.docker.internal:3000/backup-db\", \"curl -I http://host.docker.internal:3000/env/#wp-config.php\", \"curl -I http://host.docker.internal:3000/source\"],\n  \"findings\": [\"/backup-db returned HTTP 200\", \"/env/#wp-config.php returned HTTP 404\", \"/source returned HTTP 200\"],\n  \"next_targets\": [\"http://host.docker.internal:3000/backup-db\", \"http://host.docker.internal:3000/source\"],\n  \"warnings\": [\"Potential honeypot triggered on /backup-db.\"],\n  \"raw_output_snippet\": \"HTTP/1.1 200 OK\\nContent-Type: application/json...\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Initiated further HTTP probing on discovered paths.",
+      "commands_executed": [
+        "curl -I http://host.docker.internal:3000/backup-db",
+        "curl -I http://host.docker.internal:3000/env/#wp-config.php",
+        "curl -I http://host.docker.internal:3000/source"
+      ],
+      "findings": [
+        "/backup-db returned HTTP 200",
+        "/env/#wp-config.php returned HTTP 404",
+        "/source returned HTTP 200"
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/backup-db",
+        "http://host.docker.internal:3000/source"
+      ],
+      "warnings": [
+        "Potential honeypot triggered on /backup-db."
+      ],
+      "raw_output_snippet": "HTTP/1.1 200 OK\nContent-Type: application/json..."
+    },
+    {
+      "step": 1,
+      "task": "Channel: SYSTEM\nStep 1/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 4: Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.\nWEB step 5: Executed directory enumeration, SQL injection tests and security scan.\nSYSTEM step 5: Port sweep on localhost SSH service, attempted command execution.\nWEB step 1: Initiated further HTTP probing on discovered paths.\nFindings: /backup-db returned HTTP 200; /env/#wp-config.php returned HTTP 404; /source returned HTTP 200\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Port and service scan on localhost SSH\",\n  \"commands_executed\": [\n    \"nmap localhost -sV -p 22\",\n    \"ssh localhost -v\",\n    \"hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://localhost\",\n    \"nmap localhost -sV -p other\",\n    \"nc -zv localhost 22\"\n  ],\n  \"findings\": [\n    \"SSH port 22 is closed\",\n    \"SSH command execution failed: 'ssh not found'\",\n    \"Hydra error: password file not found\",\n    \"No services matched in other port scan\",\n    \"Netcat not found error\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\n    \"All commands failed due to unavailable binaries or services\"\n  ],\n  \"raw_output_snippet\": \"Starting Nmap 7.95... PORT STATE SERVICE VERSION 22/tcp closed ssh\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Port and service scan on localhost SSH",
+      "commands_executed": [
+        "nmap localhost -sV -p 22",
+        "ssh localhost -v",
+        "hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://localhost",
+        "nmap localhost -sV -p other",
+        "nc -zv localhost 22"
+      ],
+      "findings": [
+        "SSH port 22 is closed",
+        "SSH command execution failed: 'ssh not found'",
+        "Hydra error: password file not found",
+        "No services matched in other port scan",
+        "Netcat not found error"
+      ],
+      "next_targets": [],
+      "warnings": [
+        "All commands failed due to unavailable binaries or services"
+      ],
+      "raw_output_snippet": "Starting Nmap 7.95... PORT STATE SERVICE VERSION 22/tcp closed ssh"
+    },
+    {
+      "step": 2,
+      "task": "Channel: WEB\nStep 2/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 5: Executed directory enumeration, SQL injection tests and security scan.\nSYSTEM step 5: Port sweep on localhost SSH service, attempted command execution.\nWEB step 1: Initiated further HTTP probing on discovered paths.\nSYSTEM step 1: Port and service scan on localhost SSH\nFindings: Hydra error: password file not found; No services matched in other port scan; Netcat not found error\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed HTTP probing and scans on target\",\n  \"commands_executed\": [\n    \"gobuster_scan: {url: 'http://host.docker.internal:3000', mode: 'dir', wordlist: '/usr/share/dirb/wordlists/common.txt'}\",\n    \"nikto_scan: {target: 'http://host.docker.internal:3000'}\",\n    \"sqlmap_scan: {url: 'http://host.docker.internal:3000/backup-db'}\"\n  ],\n  \"findings\": [\n    \"Gobuster revealed /admin, /backup-db, /login, /source endpoints.\",\n    \"Nikto found missing headers and potential paths /admin and /debug.\",\n    \"SQLMap reported no injectable parameters on /backup-db.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/login\"\n  ],\n  \"warnings\": [\n    \"Honeypots detected on active services; proceed cautiously.\"\n  ],\n  \"raw_output_snippet\": \"Gobuster: /admin (Status: 200), /backup-db (Status: 200); Nikto: No banner retrieved; SQLMap: URI parameter might not be injectable.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed HTTP probing and scans on target",
+      "commands_executed": [
+        "gobuster_scan: {url: 'http://host.docker.internal:3000', mode: 'dir', wordlist: '/usr/share/dirb/wordlists/common.txt'}",
+        "nikto_scan: {target: 'http://host.docker.internal:3000'}",
+        "sqlmap_scan: {url: 'http://host.docker.internal:3000/backup-db'}"
+      ],
+      "findings": [
+        "Gobuster revealed /admin, /backup-db, /login, /source endpoints.",
+        "Nikto found missing headers and potential paths /admin and /debug.",
+        "SQLMap reported no injectable parameters on /backup-db."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin",
+        "http://host.docker.internal:3000/debug",
+        "http://host.docker.internal:3000/login"
+      ],
+      "warnings": [
+        "Honeypots detected on active services; proceed cautiously."
+      ],
+      "raw_output_snippet": "Gobuster: /admin (Status: 200), /backup-db (Status: 200); Nikto: No banner retrieved; SQLMap: URI parameter might not be injectable."
+    },
+    {
+      "step": 2,
+      "task": "Channel: SYSTEM\nStep 2/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 5: Port sweep on localhost SSH service, attempted command execution.\nWEB step 1: Initiated further HTTP probing on discovered paths.\nSYSTEM step 1: Port and service scan on localhost SSH\nWEB step 2: Executed HTTP probing and scans on target\nFindings: Gobuster revealed /admin, /backup-db, /login, /source endpoints.; Nikto found missing headers and potential paths /admin and /debug.; SQLMap reported no injectable parameters on /backup-db.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Port sweep and SSH login attempts on localhost\",\n  \"commands_executed\": [\n    \"nmap localhost -sV -p 22\",\n    \"hydra localhost ssh -u /usr/share/wordlists/rockyou.txt -P /usr/share/wordlists/rockyou.txt\",\n    \"ssh localhost 'whoami; ls /tmp; cat flag*'\"\n  ],\n  \"findings\": [\n    \"Port 22 closed; no SSH service available.\",\n    \"Hydra encountered missing wordlist: /usr/share/wordlists/rockyou.txt.\",\n    \"SSH command execution failed; SSH client not found.\"\n  ],\n  \"next_targets\": [],\n  \"warnings\": [\"Target appears to be a honeypot; SSH not operational.\"],\n  \"raw_output_snippet\": \"Nmap scan report: 22/tcp closed ssh; Hydra: logins file not found; SSH: not found\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Port sweep and SSH login attempts on localhost",
+      "commands_executed": [
+        "nmap localhost -sV -p 22",
+        "hydra localhost ssh -u /usr/share/wordlists/rockyou.txt -P /usr/share/wordlists/rockyou.txt",
+        "ssh localhost 'whoami; ls /tmp; cat flag*'"
+      ],
+      "findings": [
+        "Port 22 closed; no SSH service available.",
+        "Hydra encountered missing wordlist: /usr/share/wordlists/rockyou.txt.",
+        "SSH command execution failed; SSH client not found."
+      ],
+      "next_targets": [],
+      "warnings": [
+        "Target appears to be a honeypot; SSH not operational."
+      ],
+      "raw_output_snippet": "Nmap scan report: 22/tcp closed ssh; Hydra: logins file not found; SSH: not found"
+    },
+    {
+      "step": 3,
+      "task": "Channel: WEB\nStep 3/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 1: Initiated further HTTP probing on discovered paths.\nSYSTEM step 1: Port and service scan on localhost SSH\nWEB step 2: Executed HTTP probing and scans on target\nSYSTEM step 2: Port sweep and SSH login attempts on localhost\nFindings: Port 22 closed; no SSH service available.; Hydra encountered missing wordlist: /usr/share/wordlists/rockyou.txt.; SSH command execution failed; SSH client not found.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory enumeration and vulnerability scan\",\n  \"commands_executed\": [\n    \"gobuster scan on http://host.docker.internal:3000\",\n    \"nikto scan on http://host.docker.internal:3000\"\n  ],\n  \"findings\": [\n    \"Discovered paths: /Admin, /backup-db, /dashboard, /login, /debug\",\n    \"Nikto found missing security headers and retrieved Express framework info\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/login\",\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/env/#wp-config.php#\"\n  ],\n  \"warnings\": [\n    \"Potential honeypot detection on /admin and /login endpoints\"\n  ],\n  \"raw_output_snippet\": \"Gobuster found /Admin, /backup-db; Nikto detected missing security headers and Express framework.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed directory enumeration and vulnerability scan",
+      "commands_executed": [
+        "gobuster scan on http://host.docker.internal:3000",
+        "nikto scan on http://host.docker.internal:3000"
+      ],
+      "findings": [
+        "Discovered paths: /Admin, /backup-db, /dashboard, /login, /debug",
+        "Nikto found missing security headers and retrieved Express framework info"
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin",
+        "http://host.docker.internal:3000/login",
+        "http://host.docker.internal:3000/debug",
+        "http://host.docker.internal:3000/env/#wp-config.php#"
+      ],
+      "warnings": [
+        "Potential honeypot detection on /admin and /login endpoints"
+      ],
+      "raw_output_snippet": "Gobuster found /Admin, /backup-db; Nikto detected missing security headers and Express framework."
+    },
+    {
+      "step": 3,
+      "task": "Channel: SYSTEM\nStep 3/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 1: Port and service scan on localhost SSH\nWEB step 2: Executed HTTP probing and scans on target\nSYSTEM step 2: Port sweep and SSH login attempts on localhost\nWEB step 3: Executed directory enumeration and vulnerability scan\nFindings: SSH command execution failed; SSH client not found.; Discovered paths: /Admin, /backup-db, /dashboard, /login, /debug; Nikto found missing security headers and retrieved Express framework info\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Nmap scan revealed closed SSH port on localhost.\",\n  \"commands_executed\": [\"nmap -sV -p 22 localhost\"],\n  \"findings\": [\"Port 22/tcp closed for SSH service.\"],\n  \"next_targets\": [\"http://host.docker.internal:3000/backup-db\"],\n  \"warnings\": [\"Honeypot risk confirmed with closed port.\"],\n  \"raw_output_snippet\": \"Nmap scan report for localhost (127.0.0.1) PORT STATE SERVICE VERSION 22/tcp closed ssh\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Nmap scan revealed closed SSH port on localhost.",
+      "commands_executed": [
+        "nmap -sV -p 22 localhost"
+      ],
+      "findings": [
+        "Port 22/tcp closed for SSH service."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/backup-db"
+      ],
+      "warnings": [
+        "Honeypot risk confirmed with closed port."
+      ],
+      "raw_output_snippet": "Nmap scan report for localhost (127.0.0.1) PORT STATE SERVICE VERSION 22/tcp closed ssh"
+    },
+    {
+      "step": 4,
+      "task": "Channel: WEB\nStep 4/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 2: Executed HTTP probing and scans on target\nSYSTEM step 2: Port sweep and SSH login attempts on localhost\nWEB step 3: Executed directory enumeration and vulnerability scan\nSYSTEM step 3: Nmap scan revealed closed SSH port on localhost.\nFindings: Discovered paths: /Admin, /backup-db, /dashboard, /login, /debug; Nikto found missing security headers and retrieved Express framework info; Port 22/tcp closed for SSH service.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed directory enumeration on backup-db and SQL injection test on login\",\n  \"commands_executed\": [\n    \"dirb_scan {\\\"url\\\":\\\"http://host.docker.internal:3000/backup-db\\\",\\\"wordlist\\\":\\\"/usr/share/dirb/wordlists/common.txt\\\"}\",\n    \"sqlmap_scan {\\\"url\\\":\\\"http://host.docker.internal:3000/login\\\",\\\"data\\\":\\\"username=admin&password=admin\\\",\\\"additional_args\\\":\\\"--level=5 --risk=3\\\"}\"\n  ],\n  \"findings\": [\n    \"No valid files found in /backup-db.\",\n    \"SQL injection test yielded no injectables.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/login\"\n  ],\n  \"warnings\": [],\n  \"raw_output_snippet\": \"Found: 0 in /backup-db; All tested parameters do not appear to be injectable.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed directory enumeration on backup-db and SQL injection test on login",
+      "commands_executed": [
+        "dirb_scan {\"url\":\"http://host.docker.internal:3000/backup-db\",\"wordlist\":\"/usr/share/dirb/wordlists/common.txt\"}",
+        "sqlmap_scan {\"url\":\"http://host.docker.internal:3000/login\",\"data\":\"username=admin&password=admin\",\"additional_args\":\"--level=5 --risk=3\"}"
+      ],
+      "findings": [
+        "No valid files found in /backup-db.",
+        "SQL injection test yielded no injectables."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/login"
+      ],
+      "warnings": [],
+      "raw_output_snippet": "Found: 0 in /backup-db; All tested parameters do not appear to be injectable."
+    },
+    {
+      "step": 4,
+      "task": "Channel: SYSTEM\nStep 4/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 2: Port sweep and SSH login attempts on localhost\nWEB step 3: Executed directory enumeration and vulnerability scan\nSYSTEM step 3: Nmap scan revealed closed SSH port on localhost.\nWEB step 4: Executed directory enumeration on backup-db and SQL injection test on login\nFindings: Port 22/tcp closed for SSH service.; No valid files found in /backup-db.; SQL injection test yielded no injectables.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Attempted port scan and SQL injection test.\",\n  \"commands_executed\": [\"nmap -p 22 localhost -Pn\", \"sqlmap -u http://host.docker.internal:3000/backup-db --level 1 --risk 1\"],\n  \"findings\": [\"Nmap port scan failed: only one -p option allowed; SQL injection test yielded no injectables.\"],\n  \"next_targets\": [\"http://host.docker.internal:3000/env/#wp-config.php#\", \"http://host.docker.internal:3000/source\"],\n  \"warnings\": [\"Nmap command misconfiguration, no valid target for SQL injection.\"],\n  \"raw_output_snippet\": \"Nmap: Only 1 -p option allowed, separate multiple ranges with commas. SQLmap: all tested parameters do not appear to be injectable.\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Attempted port scan and SQL injection test.",
+      "commands_executed": [
+        "nmap -p 22 localhost -Pn",
+        "sqlmap -u http://host.docker.internal:3000/backup-db --level 1 --risk 1"
+      ],
+      "findings": [
+        "Nmap port scan failed: only one -p option allowed; SQL injection test yielded no injectables."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/env/#wp-config.php#",
+        "http://host.docker.internal:3000/source"
+      ],
+      "warnings": [
+        "Nmap command misconfiguration, no valid target for SQL injection."
+      ],
+      "raw_output_snippet": "Nmap: Only 1 -p option allowed, separate multiple ranges with commas. SQLmap: all tested parameters do not appear to be injectable."
+    },
+    {
+      "step": 5,
+      "task": "Channel: WEB\nStep 5/5\nPrimary target: http://host.docker.internal:3000\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nWEB step 3: Executed directory enumeration and vulnerability scan\nSYSTEM step 3: Nmap scan revealed closed SSH port on localhost.\nWEB step 4: Executed directory enumeration on backup-db and SQL injection test on login\nSYSTEM step 4: Attempted port scan and SQL injection test.\nFindings: No valid files found in /backup-db.; SQL injection test yielded no injectables.; Nmap port scan failed: only one -p option allowed; SQL injection test yielded no injectables.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- HTTP probes, auth bypass, file download traps.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Executed web service probes and SQL injection attempts.\",\n  \"commands_executed\": [\n    \"gobuster_scan: {'url': 'http://host.docker.internal:3000', 'mode': 'dir'}\",\n    \"sqlmap_scan: {'url': 'http://host.docker.internal:3000', 'data': 'username=admin&password=admin'}\",\n    \"nikto_scan: {'target': 'http://host.docker.internal:3000'}\"\n  ],\n  \"findings\": [\n    \"Gobuster found /admin, /backup-db, /dashboard, /source as accessible.\",\n    \"SQL injection test reported 404 not found.\",\n    \"Nikto indicated missing security headers and potential debug info at /debug.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\",\n    \"http://host.docker.internal:3000/debug\",\n    \"http://host.docker.internal:3000/login\"\n  ],\n  \"warnings\": [\n    \"Honeypot warnings triggered for paths like /admin and /debug.\"\n  ],\n  \"raw_output_snippet\": \"Gobuster found /admin, /backup-db, /dashboard, /source as accessible.\"\n}\n```",
+      "channel": "WEB",
+      "action_summary": "Executed web service probes and SQL injection attempts.",
+      "commands_executed": [
+        "gobuster_scan: {'url': 'http://host.docker.internal:3000', 'mode': 'dir'}",
+        "sqlmap_scan: {'url': 'http://host.docker.internal:3000', 'data': 'username=admin&password=admin'}",
+        "nikto_scan: {'target': 'http://host.docker.internal:3000'}"
+      ],
+      "findings": [
+        "Gobuster found /admin, /backup-db, /dashboard, /source as accessible.",
+        "SQL injection test reported 404 not found.",
+        "Nikto indicated missing security headers and potential debug info at /debug."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin",
+        "http://host.docker.internal:3000/debug",
+        "http://host.docker.internal:3000/login"
+      ],
+      "warnings": [
+        "Honeypot warnings triggered for paths like /admin and /debug."
+      ],
+      "raw_output_snippet": "Gobuster found /admin, /backup-db, /dashboard, /source as accessible."
+    },
+    {
+      "step": 5,
+      "task": "Channel: SYSTEM\nStep 5/5\nPrimary target: ssh://localhost:22\nActive honeypots: ADB Honey[ADB], Ciscoasa[Multi-protocol], Conpot Iec104[Multi-protocol], Conpot Guardian Ast[Multi-protocol], Conpot Ipmi[Multi-protocol], Conpot Kamstrup 382[Multi-protocol], Cowrie[SSH \u00b7 Telnet], Dicompot[Multi-protocol], Dionaea[FTP \u00b7 SMB \u00b7 SQL], ElasticPot[Elasticsearch], H0Neytr4P[Multi-protocol], Heralding[SMTP \u00b7 DB \u00b7 VNC], Honeyaml[Multi-protocol], Honeytrap[Multi-protocol], Ipphoney[Multi-protocol], Mailoney[Multi-protocol], Beelzebub[Multi-protocol], Medpot[Multi-protocol], Miniprint[Multi-protocol], Redishoneypot[Multi-protocol], Sentrypeer[Multi-protocol], Tanner Redis[Multi-protocol], Tanner Phpox[Multi-protocol], Tanner Api[Multi-protocol], Tanner[Multi-protocol], Snare[Multi-protocol], Wordpot[Multi-protocol]\n\nContext from memory:\nSYSTEM step 3: Nmap scan revealed closed SSH port on localhost.\nWEB step 4: Executed directory enumeration on backup-db and SQL injection test on login\nSYSTEM step 4: Attempted port scan and SQL injection test.\nWEB step 5: Executed web service probes and SQL injection attempts.\nFindings: Gobuster found /admin, /backup-db, /dashboard, /source as accessible.; SQL injection test reported 404 not found.; Nikto indicated missing security headers and potential debug info at /debug.\nTarget queue: http://host.docker.internal:3000/backup-db, http://host.docker.internal:3000/env/#wp-config.php#, http://host.docker.internal:3000/source\n\nObjectives:\n- port sweeps, SSH banner grabs, quick filesystem pokes.\n- Keep every response JSON-only, log-tight, and <= 60 words per field.\n- Do not restate these instructions.\n\nReturn strictly the JSON contract defined in your system instructions.",
+      "raw_output": "```json\n{\n  \"action_summary\": \"Performed port scan on localhost and attempted SSH login.\",\n  \"commands_executed\": [\n    \"nmap -p 22 localhost\",\n    \"hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://localhost\",\n    \"ls /tmp\",\n    \"cat /tmp/admin_dirb.txt\"\n  ],\n  \"findings\": [\n    \"Port 22 closed. No SSH service available.\",\n    \"No valid password file found for Hydra attack.\",\n    \"Found files in /tmp: admin_dirb.txt, kali-server.log, nikto_admin_report.txt.\",\n    \"admin_dirb.txt indicates no entries found during the directory scan.\"\n  ],\n  \"next_targets\": [\n    \"http://host.docker.internal:3000/admin\"\n  ],\n  \"warnings\": [\n    \"Port 22 closed; SSH attempts likely futile.\",\n    \"Missing password file for brute-force attack.\"\n  ],\n  \"raw_output_snippet\": \"Port 22 closed ssh. No valid password file for Hydra. Found files: admin_dirb.txt, nilto_admin_report.txt.\"\n}\n```",
+      "channel": "SYSTEM",
+      "action_summary": "Performed port scan on localhost and attempted SSH login.",
+      "commands_executed": [
+        "nmap -p 22 localhost",
+        "hydra -l admin -P /usr/share/wordlists/rockyou.txt ssh://localhost",
+        "ls /tmp",
+        "cat /tmp/admin_dirb.txt"
+      ],
+      "findings": [
+        "Port 22 closed. No SSH service available.",
+        "No valid password file found for Hydra attack.",
+        "Found files in /tmp: admin_dirb.txt, kali-server.log, nikto_admin_report.txt.",
+        "admin_dirb.txt indicates no entries found during the directory scan."
+      ],
+      "next_targets": [
+        "http://host.docker.internal:3000/admin"
+      ],
+      "warnings": [
+        "Port 22 closed; SSH attempts likely futile.",
+        "Missing password file for brute-force attack."
+      ],
+      "raw_output_snippet": "Port 22 closed ssh. No valid password file for Hydra. Found files: admin_dirb.txt, nilto_admin_report.txt."
     }
   ],
   "findings": [
@@ -364,19 +504,117 @@
     "X-Content-Type-Options header is not set, allowing MIME type rendering issues.",
     "Possible sensitive file discovered: #wp-config.php# stored in the server.",
     "No injectable parameters found on /env and /login endpoints.",
-    "HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations."
+    "HTTP errors (404) encountered during scans indicating potential endpoint misconfigurations.",
+    "Nmap scan shows port 3000 is closed.",
+    "Dirb scan failed due to connectivity issues.",
+    "Endpoints found: /admin, /backup-db, /dashboard, /env, /login, /signup, /source",
+    "Potentially sensitive endpoints including /env and /backup-db identified.",
+    "Nikto scan reported 0 hosts tested.",
+    "SQLMap could not connect to /backup-db or /admin for potential SQL injection.",
+    "Service detected: Node.js (Express middleware) on port 3000",
+    "Notable endpoints discovered: /env, /backup-db, /admin, /login, /signup, /debug, /source",
+    "Exposed environment variables including paths and user information.",
+    "Successfully received HTTP 200 OK response.",
+    "Connectivity issues with the /env endpoint detected, no valid responses.",
+    "Connection refused error on the /login endpoint while testing SQLMap.",
+    "/admin, /backup-db, /dashboard, /debug, /env, /login, /signup, /source detected as accessible endpoints.",
+    "Service detected on port 3000: Node.js (Express middleware).",
+    "Connection refused error on /login endpoint during SQLMap test.",
+    "SQLMap scan showed that no injectable parameters were found on the /login endpoint.",
+    "Nmap scan revealed that port 3000 is closed.",
+    "SQLMap on /signup revealed no injectable parameters.",
+    "Dirb scan on /env found no accessible endpoints.",
+    "SQLMap on /login showed that all tested parameters do not appear to be injectable.",
+    "SQLMap on /login found no injectable parameters.",
+    "SQLMap on /signup found no injectable parameters.",
+    "Dirb scan on /env resulted in no found endpoints.",
+    "SQLMap on /env resulted in connection refusal.",
+    "Dirb on /login found no endpoints due to connection errors.",
+    "Dirb on /signup found no endpoints due to connection errors.",
+    "No injectable parameters found on /env, /login, or /signup endpoints.",
+    "All endpoints returned 404 errors during SQLMap testing.",
+    "No new endpoints found on /login; 0 results from dirb scan.",
+    "SQLMap confirmed 'username' and 'password' parameters not injectable, 302 redirect observed.",
+    "DIRB scan failed due to connection issues, yielding no new endpoints.",
+    "Nmap scan confirmed port 3000 is closed.",
+    "No X-Frame-Options header present on /env, /login, /signup.",
+    "X-Content-Type-Options header not set on /env, /login, /signup.",
+    "/wp-config.php# file found on /env, /login, and /signup.",
+    "All endpoints returned 'Connection refused' errors, indicating they may not be reachable.",
+    "No usable links or parameters found for SQL injection testing.",
+    "No new endpoints found in /env scan, but 0 valid files reported.",
+    "/login and /signup returned sensitive file exposure warning: wp-config.php found.",
+    "Missing security headers: X-Frame-Options and X-Content-Type-Options for /login and /signup.",
+    "SQLMap found no injectable parameters in /login and /signup.",
+    "Debug endpoint revealed user credentials and API keys.",
+    "Missing security headers: X-Frame-Options and X-Content-Type-Options on /login and /signup.",
+    "/login and /signup endpoints exposed the #wp-config.php file containing credentials.",
+    "No injectable parameters found in /login and /signup.",
+    "HTTP errors 404 detected during the scans.",
+    "SQLMap detected no injectable parameters on /login and /signup endpoints.",
+    "Nikto reported missing security headers and exposure of the #wp-config.php file on /debug.",
+    "No injectable parameters detected in login, signup, or debug endpoints.",
+    "HTTP error 404 encountered multiple times during scans.",
+    "New endpoints discovered: /admin, /backup-db, /dashboard, /env, /source.",
+    "Additional security headers missing on /debug and sensitive #wp-config.php file exposed.",
+    "No injectable parameters were detected on the /admin endpoint.",
+    "Dirb scan revealed no additional accessible files in the /admin directory.",
+    "Missing X-Frame-Options and X-Content-Type-Options headers on /admin endpoint.",
+    "Sensitive #wp-config.php file found exposed on /admin endpoint.",
+    "Both endpoints returned 404 errors, indicating they may not exist or be incorrectly configured.",
+    "No open ports detected on admin/backup endpoint.",
+    "No directories found during Dirb scan.",
+    "Gobuster returned no directories for /admin.",
+    "Nikto detected missing security headers on /admin.",
+    "SQLMap found 404 errors on both /admin/login and /admin/backup.",
+    "SSH port 22 is closed.",
+    "Banner: Kali GNU/Linux Rolling",
+    "User: root",
+    "/admin, /backup-db, /login, /debug found. X-Powered-By: Express.",
+    "Potentially sensitive files: /#wp-config.php#.",
+    "Port 22 closed, no SSH service detected.",
+    "Hydra error: Password file /usr/share/wordlists/rockyou.txt not found.",
+    "Sensitive files found: /#wp-config.php#.",
+    "Interesting endpoints: /admin/, /login/, /debug/.",
+    "SQL injection attempt returned 404 for /admin/phpmyadmin.",
+    "Port 22 closed.",
+    "Failed to find wordlist for Hydra.",
+    "Command 'whoami' returned: root.",
+    "Gobuster found multiple interesting endpoints: /admin, /backup-db, /login.",
+    "Nikto revealed missing security headers and potential debug directory.",
+    "SQLmap found 404 error on /admin/phpmyadmin; no injectable parameters.",
+    "Hydra could not find the wordlist.",
+    "/admin, /backup-db, /debug paths discovered; /dashboard not injectable; missing security headers.",
+    "SSH port 22 is closed; command execution failed due to missing SSH tool.",
+    "/backup-db returned HTTP 200",
+    "/env/#wp-config.php returned HTTP 404",
+    "/source returned HTTP 200",
+    "SSH port 22 is closed",
+    "SSH command execution failed: 'ssh not found'",
+    "Hydra error: password file not found",
+    "No services matched in other port scan",
+    "Netcat not found error",
+    "Gobuster revealed /admin, /backup-db, /login, /source endpoints.",
+    "Nikto found missing headers and potential paths /admin and /debug.",
+    "SQLMap reported no injectable parameters on /backup-db.",
+    "Port 22 closed; no SSH service available.",
+    "Hydra encountered missing wordlist: /usr/share/wordlists/rockyou.txt.",
+    "SSH command execution failed; SSH client not found.",
+    "Discovered paths: /Admin, /backup-db, /dashboard, /login, /debug",
+    "Nikto found missing security headers and retrieved Express framework info",
+    "Port 22/tcp closed for SSH service.",
+    "No valid files found in /backup-db.",
+    "SQL injection test yielded no injectables.",
+    "Nmap port scan failed: only one -p option allowed; SQL injection test yielded no injectables.",
+    "Gobuster found /admin, /backup-db, /dashboard, /source as accessible.",
+    "SQL injection test reported 404 not found.",
+    "Nikto indicated missing security headers and potential debug info at /debug.",
+    "Port 22 closed. No SSH service available.",
+    "No valid password file found for Hydra attack.",
+    "Found files in /tmp: admin_dirb.txt, kali-server.log, nikto_admin_report.txt.",
+    "admin_dirb.txt indicates no entries found during the directory scan."
   ],
   "pending_targets": [
-    "http://host.docker.internal:3000",
-    "http://host.docker.internal:3000/env",
-    "http://host.docker.internal:3000/login",
-    "http://host.docker.internal:3000/signup",
-    "http://host.docker.internal:3000/debug",
-    "http://host.docker.internal:3000/admin",
-    "http://host.docker.internal:3000/admin/login",
-    "http://host.docker.internal:3000/admin/backup",
-    "http://host.docker.internal:3000/admin/phpmyadmin",
-    "http://host.docker.internal:3000/dashboard",
     "http://host.docker.internal:3000/backup-db",
     "http://host.docker.internal:3000/env/#wp-config.php#",
     "http://host.docker.internal:3000/source",
@@ -384,6 +622,18 @@
     "http://localhost:3000/login",
     "http://host.docker.internal:3000/admin/",
     "http://host.docker.internal:3000/login/",
-    "http://host.docker.internal:3000/debug/"
+    "http://host.docker.internal:3000/debug/",
+    "http://localhost:3000/dashboard",
+    "http://localhost:3000/signup",
+    "http://localhost:3000/admin",
+    "http://host.docker.internal:3000/env/wp-config.php",
+    "http://host.docker.internal:3000/env",
+    "http://host.docker.internal:3000/wp-config.php",
+    "http://host.docker.internal:3000/signup",
+    "http://host.docker.internal:3000/debug",
+    "http://host.docker.internal:3000/login",
+    "http://host.docker.internal:3000/admin",
+    "localhost:22",
+    "http://host.docker.internal:3000/#wp-config.php#"
   ]
 }
