@@ -9,6 +9,236 @@
       "step": 42,
       "endpoint": "cowrie",
       "timestamp": "2025-11-22T22:05:00Z"
+    },
+    {
+      "step": 1,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.515161Z"
+    },
+    {
+      "step": 2,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.517413Z"
+    },
+    {
+      "step": 3,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.520786Z"
+    },
+    {
+      "step": 4,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.530434Z"
+    },
+    {
+      "step": 5,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.762140Z"
+    },
+    {
+      "step": 6,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.766958Z"
+    },
+    {
+      "step": 7,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.769353Z"
+    },
+    {
+      "step": 8,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.772242Z"
+    },
+    {
+      "step": 9,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.774705Z"
+    },
+    {
+      "step": 10,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.780284Z"
+    },
+    {
+      "step": 11,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.782121Z"
+    },
+    {
+      "step": 12,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.783702Z"
+    },
+    {
+      "step": 13,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.785499Z"
+    },
+    {
+      "step": 14,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.791137Z"
+    },
+    {
+      "step": 15,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.795881Z"
+    },
+    {
+      "step": 16,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.800461Z"
+    },
+    {
+      "step": 17,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.807051Z"
+    },
+    {
+      "step": 18,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.808742Z"
+    },
+    {
+      "step": 19,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.812331Z"
+    },
+    {
+      "step": 20,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.814880Z"
+    },
+    {
+      "step": 21,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.816016Z"
+    },
+    {
+      "step": 22,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.817049Z"
+    },
+    {
+      "step": 23,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.817926Z"
+    },
+    {
+      "step": 1,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.515161Z"
+    },
+    {
+      "step": 2,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.517413Z"
+    },
+    {
+      "step": 3,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.520786Z"
+    },
+    {
+      "step": 4,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.530434Z"
+    },
+    {
+      "step": 5,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.762140Z"
+    },
+    {
+      "step": 6,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.766958Z"
+    },
+    {
+      "step": 7,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.769353Z"
+    },
+    {
+      "step": 8,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.772242Z"
+    },
+    {
+      "step": 9,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.774705Z"
+    },
+    {
+      "step": 10,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.780284Z"
+    },
+    {
+      "step": 11,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.782121Z"
+    },
+    {
+      "step": 12,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.783702Z"
+    },
+    {
+      "step": 13,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.785499Z"
+    },
+    {
+      "step": 14,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.791137Z"
+    },
+    {
+      "step": 15,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.795881Z"
+    },
+    {
+      "step": 16,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.800461Z"
+    },
+    {
+      "step": 17,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.807051Z"
+    },
+    {
+      "step": 18,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.808742Z"
+    },
+    {
+      "step": 19,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.812331Z"
+    },
+    {
+      "step": 20,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.814880Z"
+    },
+    {
+      "step": 21,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.816016Z"
+    },
+    {
+      "step": 22,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.817049Z"
+    },
+    {
+      "step": 23,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.817926Z"
     }
   ],
   "attack_patterns": [

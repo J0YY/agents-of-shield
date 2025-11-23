@@ -1,393 +1,163 @@
-# ⭐ **Agents of Shield: Autonomous Defensive Agents for Web App Security**
+# ⭐ Agents of Shield — Push-Button Enterprise Defense for Small Teams
 
-*A def/acc hackathon project (London, Nov 21–23, 2025)*
-**Team: Security Track**
-
----
-
-# 🚀 Overview
-
-**Agents of Shield** is a proof-of-concept defensive AI system designed to protect vulnerable web applications from *LLM-enabled attackers*.
-We build:
-
-* A deliberately hackable **vibe-coded small business web app**
-* A **simulated AI attacker** that uses an LLM to produce scripts & payloads
-* A suite of **autonomous defensive agents** that detect, investigate, misdirect, and analyze attacks in real time
-* A final **automated security report**, including a visualization of token consumption on both sides
-
-The aim is to explore how defensive AI can keep pace with — and ideally *stay ahead of* — automated attackers that are increasingly empowered by large foundation models.
-
-This project directly aligns with the **defensive acceleration (def/acc)** mission: *accelerate defensive technologies faster than offensive ones and build societal resilience against AI-enabled threats.*
+*def/acc Hackathon • London • Nov 21–23, 2025 — Team Security Track*
 
 ---
 
-# 🧠 Motivation
+# 🚀 Elevator Pitch
 
-Small businesses and independent developers increasingly rely on “vibe-coded,” quick-to-deploy web apps — often built without security expertise. Unfortunately:
+LLM-powered botnets can now sweep thousands of vibe-coded apps in minutes. Founders without security teams have become high-ROI targets, yet enterprise tools are still locked behind six-figure deployments.
 
-* These apps are **highly vulnerable**
-* Attackers now have access to **LLMs that generate exploits automatically**
-* Traditional security tools are too heavy, slow, or expensive for most small teams
-
-Meanwhile, LLM attackers can perform:
-
-* Instant directory enumeration
-* Automated SQL injection crafting
-* Script orchestration
-* Credential-stuffing logic
-* Multi-step exploitation loops
-
-**We are entering a world where automated offensive cyber capability is free and nearly limitless.**
-
-*But defensive capability is not.*
-This project seeks to close that gap.
+**Agents of Shield** delivers the opposite experience: plug-and-lure protection that behaves like an elite SOC, but is packaged for a two-person startup. We read your repo, drop in a lightweight agent, light up honeypots, and run a hosted “Defense Command” so you see attacks — and misdirect them — in real time.
 
 ---
 
-# ✨ Vision
+# 🧰 What Founders Send Us
 
-Our team asked:
+* A GitHub/GitLab link or zip so we can parse frameworks, routes, and package manifests  
+* Minimal infra details: hosting surface (Render, Fly.io, EC2, etc.), datastore flavor, and optionally a read-only log/API key  
+* Optional Cloudflare/DNS access if they want auto-issued decoy subdomains
 
-> **What does web security look like in a world where attackers are LLM agents?**
-
-And:
-
-> **Can defensive agents meet attackers at their own speed — or faster?**
-
-Our vision:
-**defensive agents that act autonomously, adaptively, and creatively**, working alongside or *in place of* human security engineers.
-
-This project demonstrates the early prototype of such a system.
+That’s it. No SIEM plumbing, no security headcount.
 
 ---
 
-# 🛡️ Core Components
+# 🎯 What We Deliver Back
 
-The system consists of four major layers:
-
----
-
-## **1. Vulnerable Web App (Sandbox Target)**
-
-We built a deliberately vulnerable “small business” app:
-**Pet Grooming by Sofia** — a typical vibe-coded service website.
-
-It includes intentionally insecure features:
-
-* Plaintext password storage
-* SQL injection points
-* Exposed /debug and /env routes
-* Frontend JS leaking API keys
-* Insecure admin panel with no auth
-* Path traversal vulnerabilities
-* Honeypot endpoints that seem real
-
-This reflects exactly the type of software that:
-
-* Solo founders
-* Students
-* Small shops
-* Local services
-  …often deploy.
-
-The web app provides a realistic attack surface for our agents.
+* **Hosted Defense Command** — zero-setup dashboard with radar scans, live attack feed, and remediation nudges  
+* **Drop-in mirror agent** (Express middleware, Django app, or reverse proxy module) that clones traffic, streams attack_log.json, and surfaces decoys like `/admin-v2`, `/backup-db`, `/printer-queue` automatically  
+* **Click-to-deploy honeypots** — fake admin consoles, backup zips, config dumps, printer queues — each with detectors, payload capture, and funnels for follow-up  
+* **Alerting fabric** — email, Slack, or LLM summaries (“Botnet-from-VN hit /download-db; Honey DB triggered, payload captured…”)  
+* **Enterprise playbook, democratized** — tuned to tireless, automated adversaries so founders can stay focused on shipping
 
 ---
 
-## **2. AI Attacker (Simulated Adversary)**
+# 🔄 Flow in Three Steps
 
-This is a fully autonomous LLM-powered attacker that:
-
-* Scans the app
-* Generates exploitation payloads
-* Writes Python/Node/cURL scripts to run
-* Attempts SQLi, path traversal, credential guessing
-* Iteratively refines its strategies
-* Explores the vulnerable attack surface
-
-We do *not* encourage real malicious use.
-This attacker exists solely to benchmark our defensive system.
+1. **Founder links the repo or log source** — scanner ingests frameworks, routes, and dependency fingerprints.  
+2. **Defense Command animates a radar sweep** — highlights exploitable surfaces, recommends honeypots tailored to their code, and shows live attacker hits.  
+3. **One-click deployment** — suggested decoys ship via our agent or our hosted reverse proxy. Alerts follow, along with a structured report for investors, auditors, or judges.
 
 ---
 
-## **3. Defensive Agent Suite (Main Innovation)**
-
-### 🔷 **Honeypot Generator Agent**
-
-Generates fake:
-
-* admin panels
-* database dumps
-* backup routes
-* configuration files
-
-Used to:
-
-* waste attacker cycles
-* misdirect automated exploit loops
-* collect high-signal telemetry on attacker behavior
-
----
-
-### 🔶 **Obfuscation Agent**
-
-Introduces dynamic obstacles:
-
-* rotates endpoint names
-* injects timing delays
-* modulates responses
-* scrambles HTML comments
-* disables certain routes on the fly
-
-Goal:
-Increase attacker token cost, reduce defender token cost.
-
----
-
-### 🟩 **Anti-Phishing / Payload Sanitizer**
-
-Analyzes suspicious inbound content:
-
-* rewrites dangerous HTML
-* detects injection attempts
-* sanitizes or neutralizes scripts
-* warns investigation agent
-
----
-
-### 🟥 **Attack Investigation Agent**
-
-Classifies and analyzes each attack:
-
-* SQLi / XSS / CSRF / auth bypass / enumeration
-* Attack severity scoring
-* Whether exploit succeeded
-* What data would have been compromised
-* Recommended fixes
-
-Each attempt is logged as structured JSON, e.g.:
-
-```json
-{
-  "attack_type": "SQL Injection",
-  "payload": "' OR 1=1 --",
-  "severity": "high",
-  "endpoint": "/login",
-  "was_successful": false,
-  "recommended_fix": "Use parameterized queries"
-}
-```
-
----
-
-### 🟪 **Security Report Generator Agent**
-
-Creates:
-
-* An automated security report
-* A timeline of attacks
-* A taxonomy of exploit attempts
-* Visualizations (heatmap & token-usage plot)
-* Executive summary
-
-**This is what judges will see during your demo.**
-
----
-
-## **4. Orchestrator (Agent Router)**
-
-A small backend layer that:
-
-* Receives attacker actions
-* Routes them to defensive agents
-* Collects outputs
-* Updates the global attack log
-* Produces the PDF/HTML final report
-
-This is the "brain" that ties the entire system together.
-
----
-
-# 🧩 Technical Architecture
+# 🧱 System Architecture
 
 ```
             ┌──────────────────────────────┐
             │ Vulnerable Web App           │
             │ (Pet Grooming by Sofia)      │
             └──────────────┬───────────────┘
-                           │
+                           │ mirrored traffic
                            ▼
             ┌──────────────────────────────┐
-            │ AI Attacker Agent            │
-            │ (LLM ⇨ payloads/scripts)     │
+            │ Mirror Agent                 │
+            │ (Express / Django / proxy)   │
             └──────────────┬───────────────┘
-                           │ attack events
+                           │ attack events + decoy hits
                            ▼
             ┌──────────────────────────────┐
-            │ Orchestrator                 │
-            │ (routes to defense agents)   │
+            │ Defense Command Orchestrator │
             └──────┬────────┬────────┬─────┘
                    │        │        │
    ┌───────────────▼──┐ ┌───▼────────▼───┐ ┌───────────────▼──────┐
    │ Honeypot Agent    │ │ Obfuscation     │ │ Investigation Agent  │
-   └───────────────┬───┘ │ Agent           │ └───────────────┬──────┘
-                   │     └────────────────┘                 │
+   │ (decoys & lures)  │ │ Agent           │ │ + Report Generator   │
+   └───────────────┬───┘ └────────────────┘ └───────────────┬──────┘
+                   │                                        │
                    ▼                                        ▼
        ┌──────────────────────┐                   ┌───────────────────────┐
-       │ Honeypot endpoints   │                   │ Security Report Agent │
+       │ Hosted honeypots     │                   │ Defense Command UI    │
+       │ & decoy subdomains   │                   │ + Slack/Email/LLM bots│
        └──────────────────────┘                   └───────────────────────┘
 ```
 
----
-
-# 🧪 Experimental Result: Token Usage Plot
-
-One of the novel aspects of this project is an **economic framing of cyber offense vs defense**:
-
-> How many tokens does an attacker spend vs how many tokens a defender must spend to identify, classify, and mitigate?
-
-We produce a graph showing:
-
-* Defender token cost stays roughly constant
-* Attacker token cost grows significantly due to honeypots & misdirection
-
-This is a **defensive cost asymmetry** — the holy grail of defensive AI.
+Founders see attacker pressure heatmaps, token cost asymmetry plots, and recommended fixes instantly — no terminal spelunking required.
 
 ---
 
-# 🏆 Why This Project Matters (Impact)
+# 🧠 Why This Matters
 
-## **1. AI attackers change the game**
-
-LLMs dramatically reduce the skill level required to launch cyberattacks.
-
-This is inevitable.
-Defensive acceleration is about meeting this reality with resilient infrastructure.
+* **AI-native offense** — Automated recon + exploitation loops are cheap; we raise their cost curve by feeding them believable traps and throttling their context.  
+* **Security without a security team** — Attach the repo, drop in our middleware, and defense shows up as a hosted experience.  
+* **Defensive acceleration** — Every honeypot hit adds training data for our investigation agent, shrinking response time and improving detection without human toil.  
+* **Scales with founders, not headcount** — Agents don’t sleep, instrumentation is scripted, and the same pipeline can safeguard hundreds of small shops.
 
 ---
 
-## **2. Small organizations are the most at-risk**
+# 🧩 Core Modules
 
-Most security breaches don’t happen at Fortune 500 companies.
-They happen to:
-
-* individuals
-* small shops
-* side projects
-* local businesses
-
-Our system protects them.
+* **Vulnerable small-business sandbox** — “Pet Grooming by Sofia” replicates the messy stack we’re protecting: plaintext creds, debug routes, leaked API keys, path traversal bugs, etc.  
+* **LLM Red Team** — Attacker that scans, generates payloads, iterates scripts, tries to SSH in, and benchmarks our defenses. Strictly sandboxed for ethical testing.  
+* **Honeypot Generator** — Fabricates admin panels, database dumps, backup zips, and config leaks with embedded detectors to capture payloads and dial up attacker token spend.  
+* **Obfuscation & Flow Agent** — Dynamically rotates routes, injects delays, and modulates responses to jam automated scripts.  
+* **Investigation + Report Agent** — Classifies each attempt (SQLi, XSS, auth bypass, etc.), scores severity, recommends mitigations, and compiles PDF/HTML evidence with token economics.  
+* **Defense Command UI** — Radar scan, live logs, honeypot toggles, and alert routing in one place.
 
 ---
 
-## **3. Defensive agents scale infinitely**
+# 📊 Token Economics Snapshot
 
-Unlike human security engineers, defensive agents:
-
-* never sleep
-* never forget
-* operate 24/7
-* scale cheaply
-* adapt instantly
-
-This is how we democratize safety.
+We track every prompt and response for both attacker and defender. Honeypots and obfuscation deliberately increase attacker token spend while keeping defender analysis flat — showcasing the defensive cost asymmetry judges care about.
 
 ---
 
-## **4. This approach shifts security left**
-
-Instead of securing apps *after* they are deployed, our system:
-
-* identifies misconfigurations immediately
-* deploys honeypots in minutes
-* logs attempts right away
-
-Defense becomes embedded, autonomous, and proactive.
-
----
-
-## **5. This project is the beginning of a whole new paradigm**
-
-A world where:
-
-* web apps defend themselves
-* attackers waste compute in infinite honeypots
-* automated agents generate actionable reports
-* security becomes composable and model-driven
-
-This aligns deeply with the def/acc vision.
-**Build defensive technologies so powerful and ubiquitous that offense becomes uncompetitive.**
-
----
-
-# 📦 Repository Structure
-
+# 📂 Repository Map
 ```
 /
-├── vulnerable-app/              # Intentionally hackable web app
+├── vulnerable-app/              # Pet Grooming by Sofia sandbox
 ├── attacker-agent/              # LLM attacker scripts & prompts
-├── defense-orchestrator/        # Router for all defensive actions
+├── defense-orchestrator/        # Routes telemetry to agents
 ├── defensive-agents/
 │   ├── honeypot-generator/
 │   ├── obfuscation-agent/
 │   ├── investigation-agent/
 │   └── report-generator/
-├── attack_logs/                 # Logged events
-├── reports/                     # Final security reports (PDF/HTML)
-├── plots/                       # Token-usage visualizations
-└── README.md                    # (this file)
+├── defense/dashboard/           # Defense Command frontend
+├── attack_logs/                 # attack_log.json artifacts
+├── reports/                     # PDF/HTML security reports
+├── plots/                       # Token usage + heatmaps
+└── README.md
 ```
 
 ---
 
-# 🧪 How to Run (High-Level)
+# ▶️ Quickstart (Hackathon Demo Flow)
 
-**1. Start the vulnerable web app**
-
+1. **Boot the vulnerable app**
 ```
 cd vulnerable-app
 npm install
 node server.js
 ```
-
-**2. Start the orchestrator**
-
+2. **Start the orchestrator + agents**
 ```
 cd defense-orchestrator
 npm install
 node index.js
 ```
-
-**3. Run attacker agent**
-
+3. **Launch the LLM attacker**
 ```
-python attack_loop.py
+python attacker-agent/attack_loop.py
 ```
-
-**4. View logs & generated report**
-
+4. **Open Defense Command**
+```
+cd defense/dashboard
+npm install
+npm run dev
+```
+5. **Review reports & alerts**
 ```
 open reports/latest_report.html
 ```
 
 ---
 
-# ⚠️ Ethics & Safety Disclaimer
+# ⚖️ Ethics & Safety
 
-This project is meant for:
-
-* academic demonstration
-* defensive research
-* hackathon prototyping
-
-It is *not* intended for real-world exploitation.
-
-All attack demonstrations occur only in our contained sandbox environment.
+All offensive tooling stays inside this sandbox and exists solely to benchmark defenses. We do not encourage or support real-world exploitation. If you adapt this code, only target systems you own and operate.
 
 ---
 
-# 🙌 Acknowledgments
+# 🙌 Credits
 
-Built during the **def/acc hackathon – London, 2025**, with the mission of accelerating AI safety and building a resilient future for humanity.
-
----
+Built for the def/acc hackathon in London by Team Security Track to demonstrate that enterprise-grade defense can be push-button accessible for every founder.

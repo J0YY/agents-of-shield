@@ -9,12 +9,15 @@ dependencies = [
     "pydantic",
     "openai",
     "multimethod",
-    "termcolor"
+    "termcolor",
+    "paramiko",
+    "requests"
     ]
 
 [project.scripts]
 RedTeamAgent = "redteamagent.entry:main"
 ReAct = "redteamagent.react.react:main"
+AutoStrike = "redteamagent.scripts.auto_attack:main"
 
 [tool.setuptools]
 include-package-data = true

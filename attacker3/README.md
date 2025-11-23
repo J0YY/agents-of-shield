@@ -43,6 +43,59 @@ $ docker run -it --rm redteamagent
 
 Edit `src/redteamagent/config/config.json` **before** building if you need custom values.
 
+### 2.1 Automated multi-phase attack (`AutoStrike`)
+
+If you don’t want to babysit the agent, the new `AutoStrike` console script
+launches ReAct with the **kali_mcp_web** mission plan *and* immediately
+follows up with aggressive SSH guesses to light up Cowrie (or any other SSH
+honeypot) logs.
+
+```bash
+# Make sure your API key is available to the container
+export OPENAI_API_KEY="sk-..."
+
+cd attacker3
+docker run -it --rm --network host \
+  -e OPENAI_API_KEY \
+  redteamagent AutoStrike \
+    --base-url http://localhost:3000 \
+    --ssh-host 192.168.65.1 \
+    --ssh-passwords password,root,toor,admin,changeme \
+    --ssh-cycles 8 \
+    --log-level INFO
+```
+
+- The HTTP phase runs once and mirrors the instructions from
+  `attacker2/prompts/kali_mcp_web.md` (lines 11‑14).
+- The SSH phase immediately begins rotating through the supplied passwords,
+  producing rapid “login failed” events similar to the Cowrie snippet you
+  shared. Tune `--ssh-delay`, `--ssh-cycles`, and the password list to make
+  the log volume “more intense”.
+- All parameters (`--base-url`, user, password list, timeout, etc.) are
+  overridable so you can point the flow at any lab target.
+- SSH now defaults to **port 2222**, matching Cowrie/T-Pot out of the box.
+  Override with `--ssh-port` if your honeypot is bound elsewhere.
+- The launcher now issues a configurable **HTTP noise burst** before ReAct
+  kicks in. Adjust `--noise-requests` and `--noise-concurrency` to quickly
+  fill dashboard charts with synthetic traffic even if the LLM is still
+  waiting on tool output.
+- Deterministic tooling (`gobuster`, `wfuzz`, `httpx`, `curl`, `html2text`)
+  now runs **before** the LLM via the scripted playback phase so you always
+  get log lines, even if the model stalls. Disable it with
+  `--disable-scripted-http` or switch to dry-run logging with
+  `--scripted-http-dry-run`.
+- If you’re launching from Docker Desktop, pass both
+  `--http-host-alias host.docker.internal` and
+  `--ssh-host-alias host.docker.internal` so the container can actually reach
+  services exposed on your macOS host. The prompt will still mention the
+  original target, but the agent + scripted tools will hit the alias.
+
+> **Tip (macOS/Windows Docker Desktop):** `--network host` is ignored on
+> desktop hypervisors, so SSH attempts from the container cannot hit
+> `192.168.65.1`. If you need the source IP in Cowrie logs to match the host,
+> run the script natively (`pip install -e . && AutoStrike ...`) or execute
+> it from a lightweight Python venv instead of Docker.
+
 ---
 
 ## 3  Run natively (advanced / risky)

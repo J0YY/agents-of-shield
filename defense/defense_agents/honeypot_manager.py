@@ -235,15 +235,21 @@ class HoneypotManager:
         self.state_file.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
 
     def inspect(self, event: Dict) -> Dict:
-        target_url = event.get("action", {}).get("target_url", "")
-        path = urlparse(target_url).path or target_url
+        action = event.get("action", {}) or {}
+        target_url = action.get("target_url", "")
+        action_type = (action.get("action_type") or "").upper()
+        parsed = urlparse(target_url)
+        path = parsed.path or target_url
 
         result = {"triggered": False, "honeypot": None}
         matched_service = None
-        for service, endpoints in self.SERVICE_ENDPOINTS.items():
-            if any(path.startswith(ep) for ep in endpoints):
-                matched_service = service
-                break
+        if action_type.startswith("COWRIE") or parsed.scheme == "ssh":
+            matched_service = "cowrie"
+        else:
+            for service, endpoints in self.SERVICE_ENDPOINTS.items():
+                if any(path.startswith(ep) for ep in endpoints):
+                    matched_service = service
+                    break
         if matched_service and matched_service in self._catalog:
             meta = self._catalog[matched_service]
             record = self._state["honeypots"].setdefault(matched_service, self._default_entry(matched_service))
