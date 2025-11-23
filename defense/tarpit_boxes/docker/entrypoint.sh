@@ -2,7 +2,7 @@
 set -euo pipefail
 
 LIBVIRT_STORAGE=/var/lib/libvirt/images
-DATA_MOUNT=/opt/proprietary_data
+DATA_MOUNT=/data
 TRAP_LAYER=/tmp/trap_layer
 LIBVIRT_DIR=/opt/tarpit/libvirt
 IMAGES_DIR=/opt/tarpit/images

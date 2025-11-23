@@ -237,18 +237,20 @@ class LLMBaitGenerator:
         return self._fallback_file_body(path, entry)
 
     # --------- LLM-backed generators -------------------------------------
-    def _llm_directory_listing(self, path: str) -> List[DirectoryEntry]:
+    def _llm_directory_listing(self, path: str, root_path: str = "/data") -> List[DirectoryEntry]:
         system_prompt = (
-            "You curate realistic Linux filesystem trees for a production "
-            "server that an attacker might explore. For the provided path, "
-            "return JSON describing between 6 and 12 entries. Always include "
-            "at least 3 directories and at least 3 files. Mix mundane names "
+            "You curate a realistic Linux filesystem for a production "
+            "server that an attacker might explore. You will be given a path to a directory"
+            "and you should return a JSON object with 3 to 12 element inside that directory."
+            "You should NOT generate files for subdirectories. If the path is /, you should only generate files"
+            "for the / directory, not for /var/www or any other subdirectory." 
+            "Always include at least 1 directory. Mix mundane names "
             "with enticing targets; attackers should second-guess whether the "
             "data is genuine. Use believable naming tied to the path context. "
             "Directories should hint at further depth so the tree feels infinite."
         )
         user_prompt = (
-            f"Path: {path}\n"
+            f"Path: {root_path}{path}\n"
             "Return ONLY JSON (no markdown). Format:\n"
             "[\n"
             '  {"name": "string", "type": "dir|file", '
@@ -264,7 +266,7 @@ class LLMBaitGenerator:
             "files (e.g., README.md, rotate-logs.sh) alongside high-value ones.\n"
             "- Descriptions help future content generation; keep them short.\n"
             "- Never repeat names already used for this path."
-            "- File and directory names should be relative to the provided path. DO NOT try and generate files for subdirectories (e.g. if the path is /, generate var ONLY, not var/www)"
+            "- DO NOT try and generate files for subdirectories"
         )
 
         text = self.realtime.complete(system_prompt, user_prompt)
@@ -430,6 +432,7 @@ class LLMBaitGenerator:
 
     @staticmethod
     def _sanitize_name(name: str) -> str:
+        name = name.split("/")[-1]
         cleaned = "".join(c for c in name if c.isalnum() or c in {"-", "_", ".", " "})
         cleaned = cleaned.strip().replace(" ", "_")
         cleaned = cleaned.strip("_") or "misc"

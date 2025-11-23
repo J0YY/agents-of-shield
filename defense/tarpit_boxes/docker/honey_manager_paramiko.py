@@ -80,7 +80,7 @@ def append_log_line(line: str):
 LISTEN_PORT = 2222          # Port to trap attackers (Redirect Host:22 -> Host:2222 via iptables)
 MASTER_VM = "tarpit_vm"   # The defined "Golden Image" VM in Libvirt
 POOL_PATH = "/var/lib/libvirt/images/"
-MAX_HOT_VMS = 1            # Max simultaneous attacks
+MAX_HOT_VMS = 3            # Max simultaneous attacks
 PERSISTENCE_MINUTES = 10    # Time to keep VM alive after disconnect
 
 # =================SSH MITM SETTINGS================
