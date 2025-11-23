@@ -330,34 +330,74 @@ class HoneypotManager:
 
         return {"armed_at": timestamp, "honeypots": armed_records}
 
+    def _load_cowrie_logs(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Load Cowrie logs from the JSON log file."""
+        cowrie_log_path = Path(__file__).resolve().parents[2] / "tpotce" / "data" / "cowrie" / "log" / "cowrie.json"
+        if not cowrie_log_path.exists():
+            return []
+        entries: List[Dict[str, Any]] = []
+        try:
+            with cowrie_log_path.open("r", encoding="utf-8", errors="ignore") as fh:
+                lines = fh.readlines()
+            for line in lines[-limit:]:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        except (IOError, OSError) as exc:
+            logger.debug("Unable to read Cowrie logs: %s", exc)
+            return []
+        return entries
+
     def inventory(self) -> Dict[str, Any]:
         timestamp = datetime.utcnow().isoformat()
         managed = []
+        
+        # Ensure state has honeypots dict
+        if "honeypots" not in self._state:
+            self._state["honeypots"] = {}
+        
+        # Ensure catalog exists
+        if not self._catalog:
+            logger.warning("Honeypot catalog is empty, using fallback services")
+            self._catalog = self._build_catalog()
+        
         for service, meta in self._catalog.items():
-            record = self._state["honeypots"].setdefault(service, self._default_entry(service))
-            status = "triggered" if record.get("last_trigger_step") else ("armed" if record.get("armed") else "idle")
-            managed.append(
-                {
-                    "id": service,
-                    "label": meta["label"],
-                    "method": meta["method"],
-                    "description": meta["description"],
-                    "vector": meta["vector"],
-                    "emoji": meta["emoji"],
-                    "color": meta["color"],
-                    "status": status,
-                    "armed_at": record.get("armed_at"),
-                    "armed_reason": record.get("armed_reason"),
-                    "armed_source": record.get("armed_source"),
-                    "last_delta": record.get("last_delta"),
-                    "last_trigger_step": record.get("last_trigger_step"),
-                    "last_trigger_at": record.get("last_trigger_at"),
-                }
-            )
-            if service == "cowrie":
-                commands = self._tail_tarpit_log()
-                if commands:
-                    managed[-1]["recent_commands"] = commands
+            try:
+                record = self._state["honeypots"].setdefault(service, self._default_entry(service))
+                status = "triggered" if record.get("last_trigger_step") else ("armed" if record.get("armed") else "idle")
+                managed.append(
+                    {
+                        "id": service,
+                        "label": meta.get("label", service),
+                        "method": meta.get("method", ""),
+                        "description": meta.get("description", ""),
+                        "vector": meta.get("vector", ""),
+                        "emoji": meta.get("emoji", "🛡️"),
+                        "color": meta.get("color", "#9da1ff"),
+                        "status": status,
+                        "armed_at": record.get("armed_at"),
+                        "armed_reason": record.get("armed_reason"),
+                        "armed_source": record.get("armed_source"),
+                        "last_delta": record.get("last_delta"),
+                        "last_trigger_step": record.get("last_trigger_step"),
+                        "last_trigger_at": record.get("last_trigger_at"),
+                    }
+                )
+                if service == "cowrie":
+                    commands = self._tail_tarpit_log()
+                    if commands:
+                        managed[-1]["recent_commands"] = commands
+                    # Load Cowrie logs from JSON file
+                    cowrie_logs = self._load_cowrie_logs(limit=50)
+                    if cowrie_logs:
+                        managed[-1]["cowrie_logs"] = cowrie_logs
+            except Exception as exc:
+                logger.warning("Error processing honeypot service %s: %s", service, exc)
+                continue
 
         tpot_entries = [
             {
@@ -367,7 +407,7 @@ class HoneypotManager:
                 "source": "tpot",
                 "description": "TPot honeypot service",
             }
-            for service in self._tpot_services
+            for service in (self._tpot_services or [])
         ]
 
         return {

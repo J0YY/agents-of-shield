@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import PreAttackView from "./components/PreAttackView.jsx";
-import LiveAttackFeed from "./components/LiveAttackFeed.jsx";
-import PostAttackSummary from "./components/PostAttackSummary.jsx";
-import NetworkTimeline from "./components/NetworkTimeline.jsx";
 import HoneypotPanel from "./components/HoneypotPanel.jsx";
-import { createDefenseSocket } from "./utils/websocket.js";
-import { fetchAttackLog } from "./utils/api.js";
 import LandingPage from "./components/LandingPage.jsx";
+import LiveAttackFeed from "./components/LiveAttackFeed.jsx";
+import NetworkTimeline from "./components/NetworkTimeline.jsx";
+import PostAttackSummary from "./components/PostAttackSummary.jsx";
+import PreAttackView from "./components/PreAttackView.jsx";
+import { fetchAttackLog } from "./utils/api.js";
+import { createDefenseSocket } from "./utils/websocket.js";
 
 const WS_ENABLED = import.meta.env.VITE_DEFENSE_WS_ENABLED === "true";
 const ATTACK_LOG_POLL_MS = 4000;
@@ -20,9 +20,15 @@ function DashboardApp() {
   const [wsError, setWsError] = useState(null);
   const [defenseLogs, setDefenseLogs] = useState([]);
 
-  const appendDefenseLog = useCallback((message, level = "info", timestamp = new Date().toISOString()) => {
-    setDefenseLogs((prev) => [...prev.slice(-80), { message, level, timestamp }]);
-  }, []);
+  const appendDefenseLog = useCallback(
+    (message, level = "info", timestamp = new Date().toISOString()) => {
+      setDefenseLogs((prev) => [
+        ...prev.slice(-80),
+        { message, level, timestamp },
+      ]);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!WS_ENABLED) {
@@ -39,7 +45,11 @@ function DashboardApp() {
           setDefenseMemory(payload.defense_memory);
         }
         if (payload.classification?.label) {
-          appendDefenseLog(`[Classifier] ${payload.classification.label}`, "idle", payload.event?.timestamp);
+          appendDefenseLog(
+            `[Classifier] ${payload.classification.label}`,
+            "idle",
+            payload.event?.timestamp
+          );
         }
         if (payload.honeypot?.triggered) {
           setHoneypotTrigger({
@@ -49,9 +59,11 @@ function DashboardApp() {
             payload: payload.event?.action?.payload,
           });
           appendDefenseLog(
-            `[Honeypot] ${payload.honeypot?.label ?? payload.honeypot?.honeypot} tripped`,
+            `[Honeypot] ${
+              payload.honeypot?.label ?? payload.honeypot?.honeypot
+            } tripped`,
             "warn",
-            payload.event?.timestamp,
+            payload.event?.timestamp
           );
         }
       },
@@ -61,11 +73,14 @@ function DashboardApp() {
           setWsError(null);
         },
         onError: (err) => {
-          console.warn("WebSocket bridge unavailable, falling back to attack log polling.", err);
+          console.warn(
+            "WebSocket bridge unavailable, falling back to attack log polling.",
+            err
+          );
           setWsActive(false);
           setWsError(err?.message ?? "WebSocket unavailable");
         },
-      },
+      }
     );
     return () => socket?.close();
   }, [appendDefenseLog]);
@@ -117,13 +132,15 @@ function DashboardApp() {
     setEvents(derived.slice(-50));
     if (derived.length) {
       const last = derived[derived.length - 1];
-        if (last.honeypot?.triggered) {
-          appendDefenseLog(
-            `[Honeypot] ${last.honeypot?.label ?? last.honeypot?.honeypot} tripped`,
-            "warn",
-            last.event?.timestamp,
-          );
-        }
+      if (last.honeypot?.triggered) {
+        appendDefenseLog(
+          `[Honeypot] ${
+            last.honeypot?.label ?? last.honeypot?.honeypot
+          } tripped`,
+          "warn",
+          last.event?.timestamp
+        );
+      }
     }
   }, [attackLog, wsActive, appendDefenseLog]);
 
@@ -135,7 +152,7 @@ function DashboardApp() {
         classification: evt.classification?.label,
         honeypot: evt.honeypot?.triggered,
       })),
-    [events],
+    [events]
   );
 
   const pulseEvents = events.slice(-3).reverse();
@@ -147,14 +164,16 @@ function DashboardApp() {
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
               <div className="pill inline-flex gap-2 items-center">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse" /> Live defense posture
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse" />{" "}
+                Live defense posture
               </div>
               <h1 className="text-4xl md:text-5xl font-semibold leading-snug text-white">
-                Agents of Shield — <span className="text-accent">Defense Command</span>
+                Agents of Shield —{" "}
+                <span className="text-accent">Defense Command</span>
               </h1>
               <p className="text-white/70 text-lg">
-                Tracking autonomous attacker activity, honeypot engagement, and real-time mitigation signals across the
-                sandbox environment.
+                Tracking autonomous attacker activity, honeypot engagement, and
+                real-time mitigation signals across the sandbox environment.
               </p>
             </div>
             <div className="hero-planet" />
@@ -164,7 +183,9 @@ function DashboardApp() {
             <div className="stat-card">
               <h4>Active telemetry</h4>
               <strong>{events.length.toString().padStart(2, "0")}</strong>
-              <p className="text-sm text-white/60">events ingested this session</p>
+              <p className="text-sm text-white/60">
+                events ingested this session
+              </p>
             </div>
             <div className="stat-card">
               <h4>Latest classifiers</h4>
@@ -175,15 +196,20 @@ function DashboardApp() {
               <h4>Honeypot status</h4>
               <strong>{honeypotTrigger ? "TRIPPED" : "ARMED"}</strong>
               <p className="text-sm text-white/60">
-                {honeypotTrigger ? `Step ${honeypotTrigger.step}` : "Awaiting intrusion"}
+                {honeypotTrigger
+                  ? `Step ${honeypotTrigger.step}`
+                  : "Awaiting intrusion"}
               </p>
               {!WS_ENABLED && (
                 <p className="text-[11px] text-white/45 mt-2">
-                  WebSocket feed disabled. Showing synthesized data from attack_log.json.
+                  WebSocket feed disabled. Showing synthesized data from
+                  attack_log.json.
                 </p>
               )}
               {wsError && WS_ENABLED && (
-                <p className="text-[11px] text-rose-200 mt-2">Live feed unavailable: {wsError}</p>
+                <p className="text-[11px] text-rose-200 mt-2">
+                  Live feed unavailable: {wsError}
+                </p>
               )}
             </div>
           </div>
@@ -199,14 +225,19 @@ function DashboardApp() {
           <HoneypotPanel honeypotTrigger={honeypotTrigger} />
         </div>
 
-        <PostAttackSummary events={chain} honeypotTrigger={honeypotTrigger} defenseMemory={defenseMemory} />
+        <PostAttackSummary
+          events={chain}
+          honeypotTrigger={honeypotTrigger}
+          defenseMemory={defenseMemory}
+        />
       </main>
     </div>
   );
 }
 
 export default function App() {
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "/";
   if (pathname.startsWith("/dashboard")) {
     return <DashboardApp />;
   }
