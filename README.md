@@ -1,20 +1,23 @@
 # ⭐ Agents of Shield — Push-Button Enterprise Defense for Small Teams
 
-*def/acc Hackathon • London • Nov 21–23, 2025 — Team Security Track*
+*def/acc Hackathon • London • Nov 21–23, 2025 *
 
 ---
 
-# 🚀 Elevator Pitch
+# 🚀 Democratizing Defense
 
 LLM-powered botnets can now sweep thousands of vibe-coded apps in minutes. Founders without security teams have become high-ROI targets, yet enterprise tools are still locked behind six-figure deployments.
 
 **Agents of Shield** delivers the opposite experience: plug-and-lure protection that behaves like an elite SOC, but is packaged for a two-person startup. We read your repo, drop in a lightweight agent, light up honeypots, and run a hosted “Defense Command” so you see attacks — and misdirect them — in real time.
 
+![1b (1)](https://github.com/user-attachments/assets/e483c763-462e-4b3d-8287-b9b8060fd179)
+
+
 ---
 
-# 🧰 What Founders Send Us
+# 🧰 Super-Simple, Self Hosted (Fully Scalable!) Setup
 
-* A GitHub/GitLab link or zip so we can parse frameworks, routes, and package manifests  
+* User uploads their GitHub/GitLab link or zip so we can parse frameworks, routes, and package manifests  
 * Minimal infra details: hosting surface (Render, Fly.io, EC2, etc.), datastore flavor, and optionally a read-only log/API key  
 * Optional Cloudflare/DNS access if they want auto-issued decoy subdomains
 
