@@ -3,7 +3,10 @@ const DEFAULT_ORCHESTRATOR_PORT = import.meta.env.VITE_DEFENSE_PORT || "7700";
 const API_BASE_CANDIDATES = (() => {
   const bases = [import.meta.env.VITE_DEFENSE_API, "/api"];
   if (typeof window !== "undefined") {
-    const hostWithPort = window.location.origin.replace(/:\\d+$/, `:${DEFAULT_ORCHESTRATOR_PORT}`);
+    const hostWithPort = window.location.origin.replace(
+      /:\\d+$/,
+      `:${DEFAULT_ORCHESTRATOR_PORT}`
+    );
     bases.push(hostWithPort);
     bases.push(`http://localhost:${DEFAULT_ORCHESTRATOR_PORT}`);
   }
@@ -19,14 +22,22 @@ async function doFetch(path, signal, init = {}) {
       const response = await fetch(url, { signal, ...init });
       if (!response.ok) {
         const text = await response.text();
-        const error = new Error(text || `Request failed with status ${response.status}`);
+        const error = new Error(
+          text || `Request failed with status ${response.status}`
+        );
         error.status = response.status;
         throw error;
       }
       return response.json();
     } catch (err) {
+      // Don't retry on abort - just throw it immediately
+      if (err.name === "AbortError") {
+        throw err;
+      }
       lastError = err;
-      console.warn(`API request to ${url} failed (${err.message}). Trying next fallback...`);
+      console.warn(
+        `API request to ${url} failed (${err.message}). Trying next fallback...`
+      );
     }
   }
   throw lastError ?? new Error("All API base candidates failed");
@@ -64,4 +75,3 @@ export function runRecon(context = {}, signal) {
     body: JSON.stringify({ context }),
   });
 }
-

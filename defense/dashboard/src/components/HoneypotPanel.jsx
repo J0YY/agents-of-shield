@@ -6,14 +6,21 @@ const REFRESH_MS = 20000;
 function formatTimestamp(value) {
   if (!value) return "—";
   try {
-    return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return new Date(value).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   } catch {
     return value;
   }
 }
 
 export default function HoneypotPanel({ honeypotTrigger }) {
-  const [inventory, setInventory] = useState({ managed: [], tpot: { services: [] }, generated_at: null });
+  const [inventory, setInventory] = useState({
+    managed: [],
+    tpot: { services: [] },
+    generated_at: null,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -54,17 +61,28 @@ export default function HoneypotPanel({ honeypotTrigger }) {
     if (error) {
       return { label: "Degraded", tone: "warn" };
     }
-    return { label: loading ? "Syncing" : "Ready", tone: loading ? "idle" : "ready" };
+    return {
+      label: loading ? "Syncing" : "Ready",
+      tone: loading ? "idle" : "ready",
+    };
   }, [honeypotTrigger, loading, error]);
 
-  const triggeredHoneypots = useMemo(() => managedHoneypots.filter((hp) => hp.status === "triggered"), [managedHoneypots]);
-  const armedHoneypots = useMemo(() => managedHoneypots.filter((hp) => hp.status === "armed"), [managedHoneypots]);
+  const triggeredHoneypots = useMemo(
+    () => managedHoneypots.filter((hp) => hp.status === "triggered"),
+    [managedHoneypots]
+  );
+  const armedHoneypots = useMemo(
+    () => managedHoneypots.filter((hp) => hp.status === "armed"),
+    [managedHoneypots]
+  );
   const [showArmed, setShowArmed] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
 
   const summary = useMemo(() => {
     const total = managedHoneypots.length || 1;
-    const triggered = managedHoneypots.filter((hp) => hp.status === "triggered").length;
+    const triggered = managedHoneypots.filter(
+      (hp) => hp.status === "triggered"
+    ).length;
     const armed = managedHoneypots.filter((hp) => hp.status === "armed").length;
     const idle = total - triggered - armed;
     return [
@@ -81,15 +99,25 @@ export default function HoneypotPanel({ honeypotTrigger }) {
     <section className="glass-panel h-full honeypot-status-panel">
       <div className="honeypot-panel-header">
         <div>
-          <h2 className="text-xl font-semibold text-white">Honeypot readiness</h2>
+          <h2 className="text-xl font-semibold text-white">
+            Honeypot readiness
+          </h2>
           <p className="text-white/60 text-xs mt-1">
-            {inventory?.generated_at ? `Updated ${formatTimestamp(inventory.generated_at)}` : "Awaiting sync"}
+            {inventory?.generated_at
+              ? `Updated ${formatTimestamp(inventory.generated_at)}`
+              : "Awaiting sync"}
           </p>
         </div>
-        <span className={`pill text-xs honeypot-status-pill--${panelStatus.tone}`}>{panelStatus.label}</span>
+        <span
+          className={`pill text-xs honeypot-status-pill--${panelStatus.tone}`}
+        >
+          {panelStatus.label}
+        </span>
       </div>
 
-      {error ? <p className="text-xs text-rose-200">Inventory unavailable — {error}</p> : null}
+      {error ? (
+        <p className="text-xs text-rose-200">Inventory unavailable — {error}</p>
+      ) : null}
 
       <div className="honeypot-rings-row">
         {summary.map((slice) => (
@@ -127,14 +155,20 @@ export default function HoneypotPanel({ honeypotTrigger }) {
             return (
               <article
                 key={item.id}
-                className={`honeypot-status-card is-alert${isExpanded ? " is-expanded" : ""}`}
+                className={`honeypot-status-card is-alert${
+                  isExpanded ? " is-expanded" : ""
+                }`}
                 style={{ borderColor: "rgba(255,137,164,0.5)" }}
                 role="button"
                 tabIndex={0}
-                onClick={() => setExpandedId((prev) => (prev === item.id ? null : item.id))}
+                onClick={() =>
+                  setExpandedId((prev) => (prev === item.id ? null : item.id))
+                }
                 onKeyPress={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
-                    setExpandedId((prev) => (prev === item.id ? null : item.id));
+                    setExpandedId((prev) =>
+                      prev === item.id ? null : item.id
+                    );
                   }
                 }}
               >
@@ -151,25 +185,27 @@ export default function HoneypotPanel({ honeypotTrigger }) {
                   <p className="honeypot-method">{item.method}</p>
                   <p className="honeypot-vector">{item.vector}</p>
                 </div>
-                <div className={`honeypot-status-chip honeypot-status-chip--${cardStatus}`}>
+                <div
+                  className={`honeypot-status-chip honeypot-status-chip--${cardStatus}`}
+                >
                   {isExpanded ? "Hide log" : "Triggered"}
                 </div>
                 <div className="honeypot-status-meta">
                   <div>
                     <p className="meta-label">triggered</p>
-                    <p className="meta-value">{formatTimestamp(item.last_trigger_at)}</p>
+                    <p className="meta-value">
+                      {formatTimestamp(item.last_trigger_at)}
+                    </p>
                   </div>
                   <div>
                     <p className="meta-label">step</p>
-                    <p className="meta-value">{item.last_trigger_step ?? "—"}</p>
+                    <p className="meta-value">
+                      {item.last_trigger_step ?? "—"}
+                    </p>
                   </div>
                 </div>
                 {isExpanded ? (
                   <div className="honeypot-status-details">
-                    <p className="meta-label">payload</p>
-                    <pre className="honeypot-status-payload">
-                      {JSON.stringify(item.payload ?? honeypotTrigger?.payload ?? {}, null, 2)}
-                    </pre>
                     {item.recent_commands?.length ? (
                       <div className="honeypot-log">
                         <p className="meta-label">ssh log</p>
@@ -179,16 +215,101 @@ export default function HoneypotPanel({ honeypotTrigger }) {
                           ))}
                         </ul>
                       </div>
-                    ) : (
-                      <p className="text-xs text-white/60 mt-3">No SSH commands captured yet.</p>
-                    )}
+                    ) : null}
+                    {item.id === "cowrie" && item.cowrie_logs?.length ? (
+                      <div className="honeypot-log mt-4">
+                        <p className="meta-label">Cowrie activity log</p>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                          {item.cowrie_logs
+                            .slice(-30)
+                            .reverse()
+                            .map((log, idx) => {
+                              const eventType =
+                                log.eventid
+                                  ?.replace("cowrie.", "")
+                                  .replace(/\./g, " ") || "Unknown";
+                              const isLoginSuccess =
+                                log.eventid?.includes("login.success");
+                              const isLoginFailed =
+                                log.eventid?.includes("login.failed");
+                              const isCommand =
+                                log.eventid?.includes("command.input");
+                              const isConnect =
+                                log.eventid?.includes("session.connect");
+                              return (
+                                <div
+                                  key={idx}
+                                  className="bg-white/5 rounded p-2 text-xs border border-white/10"
+                                >
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <span
+                                      className={`font-medium ${
+                                        isLoginSuccess
+                                          ? "text-emerald-400"
+                                          : isLoginFailed
+                                          ? "text-rose-400"
+                                          : isCommand
+                                          ? "text-yellow-400"
+                                          : isConnect
+                                          ? "text-cyan-400"
+                                          : "text-white/70"
+                                      }`}
+                                    >
+                                      {eventType}
+                                    </span>
+                                    {log.timestamp && (
+                                      <span className="text-white/40 whitespace-nowrap">
+                                        {new Date(
+                                          log.timestamp
+                                        ).toLocaleTimeString([], {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          second: "2-digit",
+                                        })}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {log.message && (
+                                    <p className="text-white/80 mb-1">
+                                      {log.message}
+                                    </p>
+                                  )}
+                                  {log.input && (
+                                    <p className="text-yellow-300 font-mono">
+                                      $ {log.input}
+                                    </p>
+                                  )}
+                                  {log.username && (
+                                    <p className="text-white/60">
+                                      User: {log.username}
+                                      {log.password &&
+                                        ` (password: ${log.password})`}
+                                    </p>
+                                  )}
+                                  {log.src_ip && (
+                                    <p className="text-white/50 font-mono text-[10px] mt-1">
+                                      {log.src_ip}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    ) : item.id === "cowrie" ? (
+                      <p className="text-xs text-white/60 mt-3">
+                        No Cowrie logs available yet.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </article>
             );
           })
         ) : (
-          <p className="text-xs text-white/60">No honeypots have been tripped yet.</p>
+          <p className="text-xs text-white/60">
+            No honeypots have been tripped yet.
+          </p>
         )}
       </div>
 
@@ -200,38 +321,154 @@ export default function HoneypotPanel({ honeypotTrigger }) {
             onClick={() => setShowArmed((prev) => !prev)}
           >
             <span>Armed loadout · {armedHoneypots.length}</span>
-            <span className={`chevron ${showArmed ? "open" : ""}`} aria-hidden="true">
+            <span
+              className={`chevron ${showArmed ? "open" : ""}`}
+              aria-hidden="true"
+            >
               ▾
             </span>
           </button>
           {showArmed ? (
             <div className="honeypot-status-grid armed-grid">
-              {armedHoneypots.map((item) => (
-                <article key={item.id} className="honeypot-status-card armed-card">
-                  <div
-                    className="honeypot-status-orb"
-                    style={{
-                      background: `radial-gradient(circle at 30% 30%, ${item.color}40, rgba(255,255,255,0.02))`,
+              {armedHoneypots.map((item) => {
+                const isExpanded = expandedId === item.id;
+                return (
+                  <article
+                    key={item.id}
+                    className={`honeypot-status-card armed-card${
+                      isExpanded ? " is-expanded" : ""
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      setExpandedId((prev) =>
+                        prev === item.id ? null : item.id
+                      )
+                    }
+                    onKeyPress={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        setExpandedId((prev) =>
+                          prev === item.id ? null : item.id
+                        );
+                      }
                     }}
                   >
-                    <span>{item.emoji}</span>
-                  </div>
-                  <div className="honeypot-status-body">
-                    <p className="honeypot-label">{item.label}</p>
-                    <p className="honeypot-vector">{item.vector}</p>
-                  </div>
-                  <div className="honeypot-status-meta">
-                    <div>
-                      <p className="meta-label">armed</p>
-                      <p className="meta-value">{formatTimestamp(item.armed_at)}</p>
+                    <div
+                      className="honeypot-status-orb"
+                      style={{
+                        background: `radial-gradient(circle at 30% 30%, ${item.color}40, rgba(255,255,255,0.02))`,
+                      }}
+                    >
+                      <span>{item.emoji}</span>
                     </div>
-                    <div>
-                      <p className="meta-label">last Δ</p>
-                      <p className="meta-value">{item.last_delta != null ? `+${item.last_delta}` : "—"}</p>
+                    <div className="honeypot-status-body">
+                      <p className="honeypot-label">{item.label}</p>
+                      <p className="honeypot-vector">{item.vector}</p>
                     </div>
-                  </div>
-                </article>
-              ))}
+                    <div className="honeypot-status-meta">
+                      <div>
+                        <p className="meta-label">armed</p>
+                        <p className="meta-value">
+                          {formatTimestamp(item.armed_at)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="meta-label">last Δ</p>
+                        <p className="meta-value">
+                          {item.last_delta != null
+                            ? `+${item.last_delta}`
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                    {isExpanded &&
+                    item.id === "cowrie" &&
+                    item.cowrie_logs?.length ? (
+                      <div className="honeypot-status-details">
+                        <div className="honeypot-log mt-4">
+                          <p className="meta-label">Cowrie activity log</p>
+                          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            {item.cowrie_logs
+                              .slice(-30)
+                              .reverse()
+                              .map((log, idx) => {
+                                const eventType =
+                                  log.eventid
+                                    ?.replace("cowrie.", "")
+                                    .replace(/\./g, " ") || "Unknown";
+                                const isLoginSuccess =
+                                  log.eventid?.includes("login.success");
+                                const isLoginFailed =
+                                  log.eventid?.includes("login.failed");
+                                const isCommand =
+                                  log.eventid?.includes("command.input");
+                                const isConnect =
+                                  log.eventid?.includes("session.connect");
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="bg-white/5 rounded p-2 text-xs border border-white/10"
+                                  >
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                      <span
+                                        className={`font-medium ${
+                                          isLoginSuccess
+                                            ? "text-emerald-400"
+                                            : isLoginFailed
+                                            ? "text-rose-400"
+                                            : isCommand
+                                            ? "text-yellow-400"
+                                            : isConnect
+                                            ? "text-cyan-400"
+                                            : "text-white/70"
+                                        }`}
+                                      >
+                                        {eventType}
+                                      </span>
+                                      {log.timestamp && (
+                                        <span className="text-white/40 whitespace-nowrap">
+                                          {new Date(
+                                            log.timestamp
+                                          ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            second: "2-digit",
+                                          })}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {log.message && (
+                                      <p className="text-white/80 mb-1">
+                                        {log.message}
+                                      </p>
+                                    )}
+                                    {log.input && (
+                                      <p className="text-yellow-300 font-mono">
+                                        $ {log.input}
+                                      </p>
+                                    )}
+                                    {log.username && (
+                                      <p className="text-white/60">
+                                        User: {log.username}
+                                        {log.password &&
+                                          ` (password: ${log.password})`}
+                                      </p>
+                                    )}
+                                    {log.src_ip && (
+                                      <p className="text-white/50 font-mono text-[10px] mt-1">
+                                        {log.src_ip}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
           ) : null}
         </div>
@@ -240,12 +477,20 @@ export default function HoneypotPanel({ honeypotTrigger }) {
       <div className="honeypot-secondary-panel">
         <div className="honeypot-secondary-header">
           <div>
-            <p className="text-xs text-white/60 uppercase tracking-[0.35em]">T-Pot services</p>
-            <p className="text-white font-semibold text-sm">Auxiliary honeypot network</p>
+            <p className="text-xs text-white/60 uppercase tracking-[0.35em]">
+              T-Pot services
+            </p>
+            <p className="text-white font-semibold text-sm">
+              Auxiliary honeypot network
+            </p>
           </div>
-          <span className="text-xs text-white/45">{tpotServices.length} detected</span>
+          <span className="text-xs text-white/45">
+            {tpotServices.length} detected
+          </span>
         </div>
-        {tpotError ? <p className="text-xs text-rose-200 mt-1">{tpotError}</p> : null}
+        {tpotError ? (
+          <p className="text-xs text-rose-200 mt-1">{tpotError}</p>
+        ) : null}
         <div className="honeypot-service-chips">
           {tpotServices.length ? (
             tpotServices.map((service) => (
@@ -254,11 +499,12 @@ export default function HoneypotPanel({ honeypotTrigger }) {
               </span>
             ))
           ) : (
-            <p className="text-xs text-white/50">No external honeypots discovered yet.</p>
+            <p className="text-xs text-white/50">
+              No external honeypots discovered yet.
+            </p>
           )}
         </div>
       </div>
     </section>
   );
 }
-
