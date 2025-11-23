@@ -19,6 +19,15 @@ The recon agent follows a **simple, tool-based** architecture:
 4. **Report** → Agent produces structured assessment report
 5. **Response** → Report sent back to orchestrator for defensive actions
 
+### Offline fallback
+
+> New in this update: the recon agent no longer hard-fails when the OpenAI
+> Agents SDK or `OPENAI_API_KEY` is missing.
+
+- If the LLM stack is available, the agent still spins up the MCP tool chain and lets the hosted model perform the investigation.
+- If the SDK or API key is **not** present, the agent switches to a deterministic heuristic analyzer that tails `vulnerable-app/attack_log.json`, flags SQL injection/path traversal/recon probes, and produces the same structured report shape. The heuristic mode still returns a concrete assessment with a non-empty attack type/target/attack count and pragmatic defensive recommendations, without relying on proprietary attacker intel.
+- The dashboard therefore always receives a response instead of a `500`, and the report includes an `analysis_mode` + `diagnostics` field so you can tell whether you were in `llm_mcp` or `local_heuristic` mode.
+
 ## MCP Server
 
 The recon agent uses a **custom MCP server** (`log_reader_mcp_server.py`) to read network traffic logs from the vulnerable app.

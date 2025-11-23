@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import HoneypotPanel from "./components/HoneypotPanel.jsx";
-import LandingPage from "./components/LandingPage.jsx";
-import LiveAttackFeed from "./components/LiveAttackFeed.jsx";
-import NetworkTimeline from "./components/NetworkTimeline.jsx";
-import PostAttackSummary from "./components/PostAttackSummary.jsx";
 import PreAttackView from "./components/PreAttackView.jsx";
-import { fetchAttackLog } from "./utils/api.js";
+import LiveAttackFeed from "./components/LiveAttackFeed.jsx";
+import PostAttackSummary from "./components/PostAttackSummary.jsx";
+import NetworkTimeline from "./components/NetworkTimeline.jsx";
+import HoneypotPanel from "./components/HoneypotPanel.jsx";
 import { createDefenseSocket } from "./utils/websocket.js";
+import { fetchAttackLog, fetchDefenseTelemetry } from "./utils/api.js";
+import LandingPage from "./components/LandingPage.jsx";
+import OnboardingFlow from "./components/OnboardingFlow.jsx";
 
 const WS_ENABLED = import.meta.env.VITE_DEFENSE_WS_ENABLED === "true";
 const ATTACK_LOG_POLL_MS = 4000;
@@ -19,16 +20,21 @@ function DashboardApp() {
   const [wsActive, setWsActive] = useState(false);
   const [wsError, setWsError] = useState(null);
   const [defenseLogs, setDefenseLogs] = useState([]);
+  const [operations, setOperations] = useState([]);
+  const [signalSnapshot, setSignalSnapshot] = useState([]);
 
-  const appendDefenseLog = useCallback(
-    (message, level = "info", timestamp = new Date().toISOString()) => {
-      setDefenseLogs((prev) => [
-        ...prev.slice(-80),
-        { message, level, timestamp },
-      ]);
-    },
-    []
-  );
+  const appendDefenseLog = useCallback((message, level = "info", timestamp = new Date().toISOString()) => {
+    setDefenseLogs((prev) => [...prev.slice(-80), { message, level, timestamp }]);
+  }, []);
+
+  const applyTelemetry = useCallback((payload) => {
+    if (Array.isArray(payload?.operations)) {
+      setOperations(payload.operations);
+    }
+    if (Array.isArray(payload?.signals)) {
+      setSignalSnapshot(payload.signals);
+    }
+  }, []);
 
   useEffect(() => {
     if (!WS_ENABLED) {
@@ -44,12 +50,9 @@ function DashboardApp() {
         if (payload.defense_memory) {
           setDefenseMemory(payload.defense_memory);
         }
+        applyTelemetry(payload);
         if (payload.classification?.label) {
-          appendDefenseLog(
-            `[Classifier] ${payload.classification.label}`,
-            "idle",
-            payload.event?.timestamp
-          );
+          appendDefenseLog(`[Classifier] ${payload.classification.label}`, "idle", payload.event?.timestamp);
         }
         if (payload.honeypot?.triggered) {
           setHoneypotTrigger({
@@ -59,11 +62,9 @@ function DashboardApp() {
             payload: payload.event?.action?.payload,
           });
           appendDefenseLog(
-            `[Honeypot] ${
-              payload.honeypot?.label ?? payload.honeypot?.honeypot
-            } tripped`,
+            `[Honeypot] ${payload.honeypot?.label ?? payload.honeypot?.honeypot} tripped`,
             "warn",
-            payload.event?.timestamp
+            payload.event?.timestamp,
           );
         }
       },
@@ -73,17 +74,30 @@ function DashboardApp() {
           setWsError(null);
         },
         onError: (err) => {
-          console.warn(
-            "WebSocket bridge unavailable, falling back to attack log polling.",
-            err
-          );
+          console.warn("WebSocket bridge unavailable, falling back to attack log polling.", err);
           setWsActive(false);
           setWsError(err?.message ?? "WebSocket unavailable");
         },
-      }
+      },
     );
     return () => socket?.close();
-  }, [appendDefenseLog]);
+  }, [appendDefenseLog, applyTelemetry]);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    const loadTelemetry = async () => {
+      try {
+        const snapshot = await fetchDefenseTelemetry(60, abortController.signal);
+        applyTelemetry(snapshot);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.warn("Failed to load defense telemetry snapshot", err);
+        }
+      }
+    };
+    loadTelemetry();
+    return () => abortController.abort();
+  }, [applyTelemetry]);
 
   useEffect(() => {
     let timer;
@@ -111,6 +125,34 @@ function DashboardApp() {
   }, []);
 
   useEffect(() => {
+    if (wsActive) {
+      return undefined;
+    }
+    let timer;
+    let abortController;
+
+    const loadSnapshot = async () => {
+      abortController = new AbortController();
+      try {
+        const snapshot = await fetchDefenseTelemetry(60, abortController.signal);
+        applyTelemetry(snapshot);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.warn("Failed to poll defense telemetry", err);
+        }
+      } finally {
+        timer = setTimeout(loadSnapshot, ATTACK_LOG_POLL_MS);
+      }
+    };
+
+    loadSnapshot();
+    return () => {
+      abortController?.abort();
+      if (timer) clearTimeout(timer);
+    };
+  }, [wsActive, applyTelemetry]);
+
+  useEffect(() => {
     if (wsActive || attackLog.length === 0) {
       return;
     }
@@ -132,15 +174,13 @@ function DashboardApp() {
     setEvents(derived.slice(-50));
     if (derived.length) {
       const last = derived[derived.length - 1];
-      if (last.honeypot?.triggered) {
-        appendDefenseLog(
-          `[Honeypot] ${
-            last.honeypot?.label ?? last.honeypot?.honeypot
-          } tripped`,
-          "warn",
-          last.event?.timestamp
-        );
-      }
+        if (last.honeypot?.triggered) {
+          appendDefenseLog(
+            `[Honeypot] ${last.honeypot?.label ?? last.honeypot?.honeypot} tripped`,
+            "warn",
+            last.event?.timestamp,
+          );
+        }
     }
   }, [attackLog, wsActive, appendDefenseLog]);
 
@@ -152,7 +192,7 @@ function DashboardApp() {
         classification: evt.classification?.label,
         honeypot: evt.honeypot?.triggered,
       })),
-    [events]
+    [events],
   );
 
   const pulseEvents = events.slice(-3).reverse();
@@ -164,28 +204,29 @@ function DashboardApp() {
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
               <div className="pill inline-flex gap-2 items-center">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse" />{" "}
-                Live defense posture
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse" /> Live defense posture
               </div>
               <h1 className="text-4xl md:text-5xl font-semibold leading-snug text-white">
-                Agents of Shield —{" "}
-                <span className="text-accent">Defense Command</span>
+                Agents of Shield — <span className="text-accent">Defense Command</span>
               </h1>
               <p className="text-white/70 text-lg">
-                Tracking autonomous attacker activity, honeypot engagement, and
-                real-time mitigation signals across the sandbox environment.
+                Tracking autonomous attacker activity, honeypot engagement, and real-time mitigation signals across the
+                sandbox environment.
               </p>
             </div>
-            <div className="hero-planet" />
+            <div className="flex flex-col items-end gap-4">
+              <a href="/" className="ghost-link text-xs tracking-[0.3em]">
+                ← Back to landing
+              </a>
+              <div className="hero-planet" />
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="stat-card">
               <h4>Active telemetry</h4>
               <strong>{events.length.toString().padStart(2, "0")}</strong>
-              <p className="text-sm text-white/60">
-                events ingested this session
-              </p>
+              <p className="text-sm text-white/60">events ingested this session</p>
             </div>
             <div className="stat-card">
               <h4>Latest classifiers</h4>
@@ -196,20 +237,15 @@ function DashboardApp() {
               <h4>Honeypot status</h4>
               <strong>{honeypotTrigger ? "TRIPPED" : "ARMED"}</strong>
               <p className="text-sm text-white/60">
-                {honeypotTrigger
-                  ? `Step ${honeypotTrigger.step}`
-                  : "Awaiting intrusion"}
+                {honeypotTrigger ? `Step ${honeypotTrigger.step}` : "Awaiting intrusion"}
               </p>
               {!WS_ENABLED && (
                 <p className="text-[11px] text-white/45 mt-2">
-                  WebSocket feed disabled. Showing synthesized data from
-                  attack_log.json.
+                  WebSocket feed disabled. Showing synthesized data from attack_log.json.
                 </p>
               )}
               {wsError && WS_ENABLED && (
-                <p className="text-[11px] text-rose-200 mt-2">
-                  Live feed unavailable: {wsError}
-                </p>
+                <p className="text-[11px] text-rose-200 mt-2">Live feed unavailable: {wsError}</p>
               )}
             </div>
           </div>
@@ -220,26 +256,24 @@ function DashboardApp() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <LiveAttackFeed events={events} />
-            <NetworkTimeline events={events} />
+            <NetworkTimeline events={events} operations={operations} signals={signalSnapshot} />
           </div>
           <HoneypotPanel honeypotTrigger={honeypotTrigger} />
         </div>
 
-        <PostAttackSummary
-          events={chain}
-          honeypotTrigger={honeypotTrigger}
-          defenseMemory={defenseMemory}
-        />
+        <PostAttackSummary events={chain} honeypotTrigger={honeypotTrigger} defenseMemory={defenseMemory} />
       </main>
     </div>
   );
 }
 
 export default function App() {
-  const pathname =
-    typeof window !== "undefined" ? window.location.pathname : "/";
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
   if (pathname.startsWith("/dashboard")) {
     return <DashboardApp />;
+  }
+  if (pathname.startsWith("/launch")) {
+    return <OnboardingFlow />;
   }
   return <LandingPage />;
 }

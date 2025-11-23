@@ -1,6 +1,9 @@
-import { Fragment, useMemo } from "react";
+import { useMemo } from "react";
 
 const QUEUE_COLUMNS = ["Monitoring", "Responding", "Resolved"];
+const SIGNAL_BUCKET_SECONDS = 5;
+const SIGNAL_BUCKET_COUNT = 12;
+const BUCKET_DURATION_MS = SIGNAL_BUCKET_SECONDS * 1000;
 
 function buildOps(events) {
   return events.slice(-8).map((evt) => {
@@ -18,31 +21,103 @@ function buildOps(events) {
   });
 }
 
-function buildSignals(events) {
-  const recent = events.slice(-10);
-  const velocity = recent.length;
-  const honeypotTrips = recent.filter((evt) => evt.honeypot?.triggered).length;
-  const systemEvents = recent.filter((evt) => (evt.event?.action?.action_type || "").includes("SYSTEM")).length;
-  const classifierScores = recent
-    .map((evt) => evt.payload?.payload_risk_score ?? evt.event?.status ?? 0)
-    .filter((value) => typeof value === "number");
-  const risk =
-    classifierScores.length > 0 ? Math.round(classifierScores.reduce((a, b) => a + b, 0) / classifierScores.length) : 0;
+function buildSignalBuckets(events) {
+  if (!events.length) {
+    const nowBucket = Math.floor(Date.now() / BUCKET_DURATION_MS);
+    return Array.from({ length: SIGNAL_BUCKET_COUNT }, (_, idx) => ({
+      id: nowBucket - (SIGNAL_BUCKET_COUNT - 1 - idx),
+      events: 0,
+      honeypot: 0,
+      system: 0,
+      riskSum: 0,
+      riskCount: 0,
+    }));
+  }
 
-  return [
-    { label: "Events/5s", value: velocity, trend: generateTrend(velocity) },
-    { label: "Honeypot trips", value: honeypotTrips, trend: generateTrend(honeypotTrips) },
-    { label: "System probes", value: systemEvents, trend: generateTrend(systemEvents) },
-    { label: "Avg risk", value: risk, trend: generateTrend(risk) },
-  ];
+  const enriched = events
+    .filter((evt) => evt?.event?.timestamp)
+    .map((evt) => ({
+      ref: evt,
+      ts: Date.parse(evt.event.timestamp) || Date.now(),
+    }))
+    .sort((a, b) => a.ts - b.ts);
+  if (!enriched.length) {
+    const nowBucket = Math.floor(Date.now() / BUCKET_DURATION_MS);
+    return Array.from({ length: SIGNAL_BUCKET_COUNT }, (_, idx) => ({
+      id: nowBucket - (SIGNAL_BUCKET_COUNT - 1 - idx),
+      events: 0,
+      honeypot: 0,
+      system: 0,
+      riskSum: 0,
+      riskCount: 0,
+    }));
+  }
+
+  const latestBucketId = Math.floor(enriched[enriched.length - 1].ts / BUCKET_DURATION_MS);
+  const earliestBucketId = latestBucketId - (SIGNAL_BUCKET_COUNT - 1);
+  const buckets = Array.from({ length: SIGNAL_BUCKET_COUNT }, (_, idx) => ({
+    id: earliestBucketId + idx,
+    events: 0,
+    honeypot: 0,
+    system: 0,
+    riskSum: 0,
+    riskCount: 0,
+  }));
+
+  enriched.forEach(({ ref, ts }) => {
+    const bucketId = Math.floor(ts / BUCKET_DURATION_MS);
+    if (bucketId < earliestBucketId) {
+      return;
+    }
+    const index = Math.min(SIGNAL_BUCKET_COUNT - 1, bucketId - earliestBucketId);
+    const bucket = buckets[index];
+    bucket.events += 1;
+    if (ref.honeypot?.triggered) {
+      bucket.honeypot += 1;
+    }
+    if ((ref.event?.action?.action_type || "").toUpperCase().includes("SYSTEM")) {
+      bucket.system += 1;
+    }
+    const riskCandidate = ref.payload?.payload_risk_score ?? ref.event?.status;
+    if (typeof riskCandidate === "number" && Number.isFinite(riskCandidate)) {
+      bucket.riskSum += riskCandidate;
+      bucket.riskCount += 1;
+    }
+  });
+
+  return buckets;
 }
 
-function generateTrend(seed) {
-  const points = [];
-  for (let idx = 0; idx < 12; idx += 1) {
-    points.push(Math.max(0, (Math.sin(idx / 1.8 + seed) + 1) * 50));
+function normalizeSeries(series) {
+  const peak = Math.max(...series, 0);
+  if (!peak) {
+    return series.map(() => 0);
   }
-  return points;
+  return series.map((value) => Math.round((value / peak) * 100));
+}
+
+function buildSignals(events) {
+  const buckets = buildSignalBuckets(events);
+  const eventSeries = buckets.map((bucket) => bucket.events);
+  const honeypotSeries = buckets.map((bucket) => bucket.honeypot);
+  const systemSeries = buckets.map((bucket) => bucket.system);
+  const riskSeries = buckets.map((bucket) =>
+    bucket.riskCount ? Math.round(bucket.riskSum / bucket.riskCount) : 0,
+  );
+
+  const sumSeries = (series) => series.reduce((total, value) => total + value, 0);
+  const lastValue = (series) => (series.length ? series[series.length - 1] : 0);
+
+  const totalRiskSum = buckets.reduce((total, bucket) => total + bucket.riskSum, 0);
+  const totalRiskCount = buckets.reduce((total, bucket) => total + bucket.riskCount, 0);
+  const avgRiskValue = totalRiskCount ? Math.round(totalRiskSum / totalRiskCount) : lastValue(riskSeries);
+
+  return [
+    { label: "Events/5s", value: lastValue(eventSeries), trend: normalizeSeries(eventSeries) },
+    { label: "Honeypot trips", value: sumSeries(honeypotSeries), trend: normalizeSeries(honeypotSeries) },
+    { label: "System probes", value: sumSeries(systemSeries), trend: normalizeSeries(systemSeries) },
+    { label: "Avg risk", value: avgRiskValue, trend: riskSeries },
+  ];
 }
 
 function Sparkline({ data }) {
@@ -56,9 +131,19 @@ function Sparkline({ data }) {
   );
 }
 
-export default function NetworkTimeline({ events }) {
-  const ops = useMemo(() => buildOps(events), [events]);
-  const signals = useMemo(() => buildSignals(events), [events]);
+export default function NetworkTimeline({ events, operations = [], signals = [] }) {
+  const ops = useMemo(() => {
+    if (operations?.length) {
+      return operations;
+    }
+    return buildOps(events);
+  }, [operations, events]);
+  const signalCards = useMemo(() => {
+    if (signals?.length) {
+      return signals;
+    }
+    return buildSignals(events);
+  }, [signals, events]);
   const grouped = useMemo(() => {
     return QUEUE_COLUMNS.map((column) => ({
       title: column,
@@ -103,7 +188,7 @@ export default function NetworkTimeline({ events }) {
           <span className="text-xs uppercase tracking-[0.3em] text-white/60">Health snapshot</span>
         </div>
         <div className="grid gap-4 md:grid-cols-4">
-          {signals.map((signal) => (
+          {signalCards.map((signal) => (
             <article key={signal.label} className="signal-card">
               <div>
                 <p className="signal-label">{signal.label}</p>

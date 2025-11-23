@@ -47,6 +47,24 @@ agents-of-shield-defense/
 
    Ensure the attacker agent POSTs each step to `http://localhost:7700/attack-event`. The orchestrator will route the event to every defensive agent, update honeypot memory, and stream telemetry to the dashboard.
 
+### Bridging Cowrie SSH events into the dashboard
+
+Run the Cowrie bridge alongside the orchestrator to mirror every honeypot line (`tpotce/data/cowrie/log/cowrie.json`) into the same `/attack-event` feed:
+
+```bash
+python defense/tools/cowrie_bridge.py
+```
+
+It tails the log, remembers its offset in `defense/state/cowrie_bridge_state.json`, and POSTs each entry with `action_type=COWRIE_*`. Override defaults if you run T-Pot elsewhere:
+
+```bash
+COWRIE_LOG_PATH=/path/to/cowrie.json \
+COWRIE_BRIDGE_DEFENSE_API=http://localhost:7700 \
+python defense/tools/cowrie_bridge.py
+```
+
+Leave it running to see Cowrie payloads and login attempts show up live on the dashboard.
+
 ## Defensive Agents Overview
 
 | Agent | Purpose |

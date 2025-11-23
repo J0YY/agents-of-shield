@@ -52,6 +52,11 @@ export function fetchAttackLog(limit = 60, signal) {
   return doFetch(`/attack-log?${params.toString()}`, signal);
 }
 
+export function fetchDefenseTelemetry(limit = 60, signal) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return doFetch(`/telemetry/snapshot?${params.toString()}`, signal);
+}
+
 export function armHoneypots(payload = {}, signal) {
   return doFetch("/honeypots/arm", signal, {
     method: "POST",

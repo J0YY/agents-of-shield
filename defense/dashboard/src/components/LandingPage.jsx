@@ -205,8 +205,8 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="landing-nav-actions">
-          <a href="/dashboard" className="ghost-link">
-            Launch Dashboard
+          <a href="/launch" className="ghost-link">
+            Try the workflow
           </a>
           <a href="#waitlist" className="primary-link">
             Join waitlist
@@ -230,10 +230,10 @@ export default function LandingPage() {
             LLM-powered attackers now scan thousands of weak apps a minute. We democratize enterprise defense so founders without a security team stay online.
           </p>
           <div className="hero-actions">
-            <a href="/dashboard" className="primary-link">
-              Launch live console
+            <a href="/launch" className="primary-link">
+              Set up your defense
             </a>
-            <a href="#flow" className="ghost-link">
+            <a href="/dashboard" className="ghost-link">
               See the flow
             </a>
           </div>
@@ -457,8 +457,8 @@ export default function LandingPage() {
           <a href="mailto:defense@agentsofshield.dev" className="primary-link">
             Request early access
           </a>
-          <a href="/dashboard" className="ghost-link">
-            View live demo
+          <a href="/launch" className="ghost-link">
+            Go
           </a>
         </div>
       </section>

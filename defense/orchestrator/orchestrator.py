@@ -1,31 +1,31 @@
 from __future__ import annotations
 
-import asyncio
 import json
-import os
-import sys
 from copy import deepcopy
+import asyncio
+import os
 from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
-import recon_agent  # pylint: disable=wrong-import-position
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from rich.console import Console
 
-from .codebase_scanner import scan_repository
 from .event_router import EventRouter
-from .websocket_server import manager
-from .websocket_server import router as ws_router
+from .websocket_server import manager, router as ws_router
+from .codebase_scanner import scan_repository
+from .telemetry import ActiveDefenseTracker, SignalHeatmapTracker
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = BASE_DIR.parent
 STATE_DIR = BASE_DIR / "state"
 REPORT_DIR = BASE_DIR / "reports"
 EVENT_LOG = STATE_DIR / "attacker_events.jsonl"
+DEFENSE_EVENT_LOG = STATE_DIR / "defense_events.jsonl"
 VULN_APP_DIR = REPO_ROOT / "vulnerable-app"
 ATTACK_LOG_PATH = VULN_APP_DIR / "attack_log.json"
 MAX_TIMELINE = 200
@@ -49,17 +49,11 @@ ALLOWED_ORIGINS = sorted(DEFAULT_ALLOWED_ORIGINS)
 
 load_dotenv()
 
-# Add repo root to sys.path so 'defense' module can be imported by recon_agent
-# This MUST happen before importing recon_agent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-# Add recon_agent directory to sys.path so we can import recon_agent module
-RECON_DIR = BASE_DIR / "recon_agent"
+RECON_DIR = REPO_ROOT / "recon_agent"
 if str(RECON_DIR) not in sys.path:
-    sys.path.insert(0, str(RECON_DIR))
+    sys.path.append(str(RECON_DIR))
 
-# Now we can import recon_agent after the path is set up
+from recon_agent import recon_agent  # pylint: disable=wrong-import-position
 
 console = Console()
 app = FastAPI(title="Agents of Shield – Defense Orchestrator", version="0.1.0")
@@ -74,6 +68,8 @@ app.add_middleware(
 )
 
 router = EventRouter(state_dir=STATE_DIR, report_dir=REPORT_DIR)
+ops_tracker = ActiveDefenseTracker()
+signal_tracker = SignalHeatmapTracker()
 
 
 class AttackEvent(BaseModel):
@@ -102,6 +98,13 @@ def append_event_log(record: Dict[str, Any]) -> None:
         fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def append_defense_event(record: Dict[str, Any]) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    DEFENSE_EVENT_LOG.touch(exist_ok=True)
+    with DEFENSE_EVENT_LOG.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
 def load_recent_events(limit: int = 100) -> List[Dict[str, Any]]:
     if not EVENT_LOG.exists():
         return []
@@ -119,10 +122,26 @@ def load_recent_events(limit: int = 100) -> List[Dict[str, Any]]:
     return events
 
 
+def load_defense_events(limit: int = 100) -> List[Dict[str, Any]]:
+    if not DEFENSE_EVENT_LOG.exists():
+        return []
+    with DEFENSE_EVENT_LOG.open("r", encoding="utf-8") as fh:
+        lines = fh.readlines()
+    events: List[Dict[str, Any]] = []
+    for line in lines[-limit:]:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            events.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return events
+
+
 def load_attack_log(limit: int = 60) -> List[Dict[str, Any]]:
     if not ATTACK_LOG_PATH.exists():
-        raise FileNotFoundError(
-            f"attack_log.json not found at {ATTACK_LOG_PATH}")
+        raise FileNotFoundError(f"attack_log.json not found at {ATTACK_LOG_PATH}")
     with ATTACK_LOG_PATH.open("r", encoding="utf-8", errors="ignore") as fh:
         lines = fh.readlines()
     entries: List[Dict[str, Any]] = []
@@ -161,9 +180,9 @@ async def bootstrap() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     EVENT_LOG.touch(exist_ok=True)
+    DEFENSE_EVENT_LOG.touch(exist_ok=True)
     console.rule("[bold green]Defense Orchestrator Ready")
-    console.print(
-        f"[cyan]HTTP http://localhost:{DEFAULT_PORT} · WebSocket ws://localhost:{DEFAULT_PORT}/ws")
+    console.print(f"[cyan]HTTP http://localhost:{DEFAULT_PORT} · WebSocket ws://localhost:{DEFAULT_PORT}/ws")
 
 
 @app.get("/health")
@@ -200,7 +219,10 @@ async def receive_attack_event(event: AttackEvent):
     )
 
     defense_payload = router.route(data)
+    defense_payload["operations"] = ops_tracker.ingest(defense_payload)
+    defense_payload["signals"] = signal_tracker.ingest(defense_payload)
     sanitized = sanitize_payload(defense_payload)
+    append_defense_event(sanitized)
     await manager.broadcast(sanitized)
 
     return JSONResponse({"status": "ok", "defense_event": sanitized})
@@ -246,24 +268,9 @@ async def run_recon(request: ReconRunRequest):
 @app.get("/honeypots")
 async def honeypot_inventory() -> JSONResponse:
     """Expose the current honeypot inventory for the dashboard."""
-    try:
-        if not hasattr(router, "honeypot_manager") or router.honeypot_manager is None:
-            raise HTTPException(
-                status_code=503,
-                detail="Honeypot manager not initialized"
-            )
-        payload = router.honeypot_manager.inventory()
-        return JSONResponse(payload)
-    except HTTPException:
-        raise
-    except Exception as exc:
-        console.log(f"[red]Honeypot inventory failed: {exc}")
-        import traceback
-        console.log(traceback.format_exc())
-        raise HTTPException(
-            status_code=500,
-            detail=f"Honeypot inventory error: {str(exc)}"
-        ) from exc
+
+    payload = router.honeypot_manager.inventory()
+    return JSONResponse(payload)
 
 
 @app.get("/defense-scan")
@@ -274,8 +281,7 @@ async def defense_scan() -> JSONResponse:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:  # pragma: no cover - defensive logging
         console.log(f"[red]Scan failed: {exc}")
-        raise HTTPException(
-            status_code=500, detail="Codebase scan failed") from exc
+        raise HTTPException(status_code=500, detail="Codebase scan failed") from exc
     return JSONResponse(payload)
 
 
@@ -289,24 +295,20 @@ async def attack_log(limit: int = 60) -> Dict[str, List[Dict[str, Any]]]:
     return {"entries": entries}
 
 
-@app.get("/recon-report")
-async def get_recon_report() -> JSONResponse:
-    """Get the latest recon report as JSON."""
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    recon_path = REPORT_DIR / "latest_recon_report.json"
-    if not recon_path.exists():
-        raise HTTPException(
-            status_code=404, detail="No recon report available. Run /recon/run first.")
-    try:
-        report_data = json.loads(recon_path.read_text(encoding="utf-8"))
-        return JSONResponse(report_data)
-    except (json.JSONDecodeError, IOError) as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to read recon report: {exc}") from exc
+@app.get("/telemetry/snapshot")
+async def telemetry_snapshot(limit: int = 60) -> Dict[str, Any]:
+    limit = max(1, min(limit, MAX_TIMELINE))
+    events = load_defense_events(limit)
+    latest = events[-1] if events else None
+    return {
+        "operations": latest.get("operations", []) if latest else [],
+        "signals": latest.get("signals", []) if latest else [],
+        "generated_at": latest.get("event", {}).get("timestamp") if latest else None,
+    }
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("orchestrator.orchestrator:app",
-                host="0.0.0.0", port=DEFAULT_PORT, reload=True)
+    uvicorn.run("orchestrator.orchestrator:app", host="0.0.0.0", port=7000, reload=True)
+
