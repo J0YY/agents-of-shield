@@ -69,3 +69,5 @@ defense/reports/
 attacker/state/
 defense/state/
 attacker3/src/redteamagent/config/config.json
+
+defense/tarpit_boxes/docker/images/

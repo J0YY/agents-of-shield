@@ -1,0 +1,11 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    # 'ens3' is the standard interface name for QEMU virtio-net
+    enp1s0:
+      dhcp4: true
+      dhcp6: false
+      optional: true
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]

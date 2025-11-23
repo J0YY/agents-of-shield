@@ -1,0 +1,5 @@
+fusepy
+libvirt-python
+openai
+websocket-client
+asyncssh
