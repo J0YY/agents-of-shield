@@ -202,6 +202,7 @@ services:
 # Cowrie service
   cowrie:
     container_name: cowrie
+    #build: ./docker/cowrie
     restart: always
     depends_on:
       tpotinit:
@@ -212,7 +213,7 @@ services:
     networks:
       - cowrie_local
     ports:
-      #- "56009:22"
+      - "56009:22"
       - "56010:23"
     image: ${TPOT_REPO}/cowrie:${TPOT_VERSION} 
     pull_policy: ${TPOT_PULL_POLICY}
