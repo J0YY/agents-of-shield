@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+import asyncio
 import os
 from pathlib import Path
+import sys
 from typing import Any, Dict, List
 
 from fastapi import FastAPI, HTTPException, Query
@@ -45,6 +47,12 @@ ALLOWED_ORIGINS = sorted(DEFAULT_ALLOWED_ORIGINS)
 
 load_dotenv()
 
+RECON_DIR = REPO_ROOT / "recon_agent"
+if str(RECON_DIR) not in sys.path:
+    sys.path.append(str(RECON_DIR))
+
+from recon_agent import recon_agent  # pylint: disable=wrong-import-position
+
 console = Console()
 app = FastAPI(title="Agents of Shield – Defense Orchestrator", version="0.1.0")
 app.include_router(ws_router)
@@ -73,6 +81,10 @@ class HoneypotArmRequest(BaseModel):
     delta: int | None = None
     source: str | None = None
     services: List[str] | None = None
+
+
+class ReconRunRequest(BaseModel):
+    context: Dict[str, Any] | None = None
 
 
 def append_event_log(record: Dict[str, Any]) -> None:
@@ -201,6 +213,24 @@ async def arm_honeypots(payload: HoneypotArmRequest):
         f"services={payload.services or 'all'})"
     )
     return JSONResponse({"status": "armed", **report})
+
+
+@app.post("/recon/run")
+async def run_recon(request: ReconRunRequest):
+    """Trigger the recon agent and return its report."""
+
+    def _execute():
+        agent = recon_agent.ReconAgent(working_dir=REPO_ROOT)
+        return agent.investigate(context=request.context or {"trigger": "dashboard"})
+
+    loop = asyncio.get_running_loop()
+    report = await loop.run_in_executor(None, _execute)
+
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    recon_path = REPORT_DIR / "latest_recon_report.json"
+    recon_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+
+    return JSONResponse(report)
 
 
 @app.get("/honeypots")

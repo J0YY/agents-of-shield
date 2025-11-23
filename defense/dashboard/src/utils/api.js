@@ -57,3 +57,11 @@ export function fetchReconReport(signal) {
   return doFetch("/reports/latest?fmt=json", signal);
 }
 
+export function runRecon(context = {}, signal) {
+  return doFetch("/recon/run", signal, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context }),
+  });
+}
+

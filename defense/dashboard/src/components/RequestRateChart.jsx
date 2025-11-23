@@ -75,6 +75,7 @@ export default function RequestRateChart({
   samplePoints = DEFAULT_SAMPLE_POINTS,
   pollMs = DEFAULT_POLL_MS,
   spikeThreshold = DEFAULT_SPIKE_THRESHOLD,
+  defenseLogs = [],
 }) {
   const [series, setSeries] = useState(() => buildSeries([], bucketSeconds, samplePoints));
   const [loading, setLoading] = useState(true);
@@ -92,6 +93,7 @@ export default function RequestRateChart({
     height: DEFAULT_EXPANDED_HEIGHT,
   });
   const [activeResize, setActiveResize] = useState(null);
+  const defenseLogIndexRef = useRef(0);
   const chartCeiling = useMemo(() => {
     let peak = 0;
     series.forEach((point) => {
@@ -273,6 +275,17 @@ export default function RequestRateChart({
       bodyEl.scrollTop = bodyEl.scrollHeight;
     }
   }, [terminalLogs]);
+
+  useEffect(() => {
+    if (!defenseLogs?.length) {
+      return;
+    }
+    const nextLogs = defenseLogs.slice(defenseLogIndexRef.current);
+    nextLogs.forEach((log) => {
+      pushTerminalLog(log.message, log.level || "info", log.timestamp);
+    });
+    defenseLogIndexRef.current = defenseLogs.length;
+  }, [defenseLogs, pushTerminalLog]);
 
   useEffect(() => {
     if (!terminalExpanded || typeof document === "undefined") {

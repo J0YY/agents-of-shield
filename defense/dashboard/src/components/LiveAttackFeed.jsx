@@ -11,7 +11,7 @@ export default function LiveAttackFeed({ events }) {
   }, [feed]);
 
   return (
-    <section className="glass-panel h-full flex flex-col">
+    <section className="glass-panel flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-white/50">Live Attack Feed</p>
@@ -19,9 +19,9 @@ export default function LiveAttackFeed({ events }) {
         </div>
         <span className="pill">{feed.length.toString().padStart(2, "0")} events</span>
       </div>
-      <div ref={listRef} className="space-y-3 flex-1 overflow-y-auto pr-1">
+      <div ref={listRef} className="space-y-3 live-attack-body">
         {feed.map((evt) => {
-          const risk = evt.payload?.payload_risk_score ?? 0;
+          const risk = evt.payload?.payload_risk_score ?? 1;
           const badge =
             risk > 60 ? "text-red-300 bg-red-400/10" : risk > 30 ? "text-amber-200 bg-amber-300/10" : "text-emerald-200 bg-emerald-400/10";
           return (
@@ -39,10 +39,11 @@ export default function LiveAttackFeed({ events }) {
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badge}`}>Risk {risk}</span>
               </div>
-              <div className="mt-3 grid grid-cols-3 text-xs text-white/60">
+              <div className="mt-3 grid grid-cols-2 md:grid-cols-4 text-xs text-white/60 gap-y-1">
                 <span>Status · {evt.event?.status}</span>
                 <span>Class · {evt.classification?.label || "unknown"}</span>
                 <span>Honeypot · {evt.honeypot?.triggered ? evt.honeypot?.honeypot : "—"}</span>
+                <span>Channel · {evt.event?.action?.action_type || "—"}</span>
               </div>
             </article>
           );

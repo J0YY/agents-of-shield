@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PreAttackView from "./components/PreAttackView.jsx";
 import LiveAttackFeed from "./components/LiveAttackFeed.jsx";
 import PostAttackSummary from "./components/PostAttackSummary.jsx";
@@ -18,6 +18,11 @@ function DashboardApp() {
   const [attackLog, setAttackLog] = useState([]);
   const [wsActive, setWsActive] = useState(false);
   const [wsError, setWsError] = useState(null);
+  const [defenseLogs, setDefenseLogs] = useState([]);
+
+  const appendDefenseLog = useCallback((message, level = "info", timestamp = new Date().toISOString()) => {
+    setDefenseLogs((prev) => [...prev.slice(-80), { message, level, timestamp }]);
+  }, []);
 
   useEffect(() => {
     if (!WS_ENABLED) {
@@ -33,6 +38,9 @@ function DashboardApp() {
         if (payload.defense_memory) {
           setDefenseMemory(payload.defense_memory);
         }
+        if (payload.classification?.label) {
+          appendDefenseLog(`[Classifier] ${payload.classification.label}`, "idle", payload.event?.timestamp);
+        }
         if (payload.honeypot?.triggered) {
           setHoneypotTrigger({
             step: payload.event?.step,
@@ -40,6 +48,11 @@ function DashboardApp() {
             timestamp: payload.event?.timestamp,
             payload: payload.event?.action?.payload,
           });
+          appendDefenseLog(
+            `[Honeypot] ${payload.honeypot?.label ?? payload.honeypot?.honeypot} tripped`,
+            "warn",
+            payload.event?.timestamp,
+          );
         }
       },
       {
@@ -55,7 +68,7 @@ function DashboardApp() {
       },
     );
     return () => socket?.close();
-  }, []);
+  }, [appendDefenseLog]);
 
   useEffect(() => {
     let timer;
@@ -102,7 +115,17 @@ function DashboardApp() {
       honeypot: {},
     }));
     setEvents(derived.slice(-50));
-  }, [attackLog, wsActive]);
+    if (derived.length) {
+      const last = derived[derived.length - 1];
+        if (last.honeypot?.triggered) {
+          appendDefenseLog(
+            `[Honeypot] ${last.honeypot?.label ?? last.honeypot?.honeypot} tripped`,
+            "warn",
+            last.event?.timestamp,
+          );
+        }
+    }
+  }, [attackLog, wsActive, appendDefenseLog]);
 
   const chain = useMemo(
     () =>
@@ -119,7 +142,7 @@ function DashboardApp() {
 
   return (
     <div className="app-shell pb-16">
-      <main className="max-w-6xl mx-auto px-4 lg:px-0 space-y-10 relative z-10">
+      <main className="mx-auto w-full max-w-[min(1600px,95vw)] px-6 lg:px-8 space-y-10 relative z-10">
         <header className="hero-heading mt-10 space-y-8">
           <div className="flex flex-wrap items-start justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
@@ -166,7 +189,7 @@ function DashboardApp() {
           </div>
         </header>
 
-        <PreAttackView />
+        <PreAttackView defenseLogs={defenseLogs} />
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">

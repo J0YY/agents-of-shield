@@ -24,7 +24,7 @@ const DEFAULT_CHECKPOINTS = [
 
 const LOG_REVEAL_INTERVAL = 650;
 
-export default function PreAttackView() {
+export default function PreAttackView({ defenseLogs = [] }) {
   const [scanData, setScanData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -254,7 +254,7 @@ export default function PreAttackView() {
           ))}
         </div>
 
-        <RequestRateChart />
+        <RequestRateChart defenseLogs={defenseLogs} />
       </div>
 
       <div className="space-y-6">

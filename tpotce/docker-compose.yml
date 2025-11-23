@@ -1,11 +1,8 @@
-# T-Pot: STANDARD
+# T-Pot: MAC_WIN
 networks:
+  tpotinit_local:
   adbhoney_local:
   ciscoasa_local:
-  conpot_local_IEC104:
-  conpot_local_guardian_ast:
-  conpot_local_ipmi:
-  conpot_local_kamstrup_382:
   cowrie_local:
   dicompot_local:
   dionaea_local:
@@ -19,40 +16,39 @@ networks:
   miniprint_local:
   redishoneypot_local:
   sentrypeer_local:
+  suricata_local:
   tanner_local:
   wordpot_local:
   nginx_local:
   ewsposter_local:
-  beelzebub_local:
 
 services:
 
-#########################################
+########################################
 #### DEV
-#########################################
+########################################
 #### T-Pot Init - Never delete this!
-#########################################
+########################################
 
 # T-Pot Init Service
   tpotinit:
     container_name: tpotinit
     env_file:
-      - .env
+     - .env
     restart: always
     stop_grace_period: 60s
     tmpfs:
-      - /tmp/etc:uid=2000,gid=2000
-      - /tmp/:uid=2000,gid=2000
-    network_mode: "host"
-    cap_add:
-     - NET_ADMIN
+     - /tmp/etc:uid=2000,gid=2000
+     - /tmp/:uid=2000,gid=2000
+    networks:
+     - tpotinit_local
     image: ${TPOT_REPO}/tpotinit:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     volumes:
-      - ${TPOT_DOCKER_COMPOSE}:/tmp/tpot/docker-compose.yml:ro
-      - ${TPOT_DATA_PATH}/blackhole:/etc/blackhole
-      - ${TPOT_DATA_PATH}:/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+     - ${TPOT_DOCKER_COMPOSE}:/tmp/tpot/docker-compose.yml:ro
+     - ${TPOT_DATA_PATH}/blackhole:/etc/blackhole
+     - ${TPOT_DATA_PATH}:/data
+     - /var/run/docker.sock:/var/run/docker.sock:ro
 
 
 ##################
@@ -69,7 +65,7 @@ services:
     networks:
      - adbhoney_local
     ports:
-     - "56000:5555"
+     - "5555:5555"
     image: ${TPOT_REPO}/adbhoney:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -89,120 +85,17 @@ services:
     networks:
      - ciscoasa_local
     ports:
-     - "56001:5000/udp"
-     - "56002:8443"
+     - "5000:5000/udp"
+     - "8443:8443"
     image: ${TPOT_REPO}/ciscoasa:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
     volumes:
      - ${TPOT_DATA_PATH}/ciscoasa/log:/var/log/ciscoasa
 
-# Conpot IEC104 service
-  conpot_IEC104:
-    container_name: conpot_iec104
-    restart: always
-    depends_on:
-      tpotinit:
-        condition: service_healthy
-    environment:
-     - CONPOT_CONFIG=/etc/conpot/conpot.cfg
-     - CONPOT_JSON_LOG=/var/log/conpot/conpot_IEC104.json
-     - CONPOT_LOG=/var/log/conpot/conpot_IEC104.log
-     - CONPOT_TEMPLATE=IEC104
-     - CONPOT_TMP=/tmp/conpot
-    tmpfs:
-     - /tmp/conpot:uid=2000,gid=2000
-    networks:
-     - conpot_local_IEC104
-    ports:
-     - "56003:161/udp"
-     - "56004:2404"
-    image: ${TPOT_REPO}/conpot:${TPOT_VERSION}
-    pull_policy: ${TPOT_PULL_POLICY}
-    read_only: true
-    volumes:
-     - ${TPOT_DATA_PATH}/conpot/log:/var/log/conpot
-
-# Conpot guardian_ast service
-  conpot_guardian_ast:
-    container_name: conpot_guardian_ast
-    restart: always
-    depends_on:
-      tpotinit:
-        condition: service_healthy
-    environment:
-     - CONPOT_CONFIG=/etc/conpot/conpot.cfg
-     - CONPOT_JSON_LOG=/var/log/conpot/conpot_guardian_ast.json
-     - CONPOT_LOG=/var/log/conpot/conpot_guardian_ast.log
-     - CONPOT_TEMPLATE=guardian_ast
-     - CONPOT_TMP=/tmp/conpot
-    tmpfs:
-     - /tmp/conpot:uid=2000,gid=2000
-    networks:
-     - conpot_local_guardian_ast
-    ports:
-     - "56005:10001"
-    image: ${TPOT_REPO}/conpot:${TPOT_VERSION}
-    pull_policy: ${TPOT_PULL_POLICY}
-    read_only: true
-    volumes:
-     - ${TPOT_DATA_PATH}/conpot/log:/var/log/conpot
-
-# Conpot ipmi
-  conpot_ipmi:
-    container_name: conpot_ipmi
-    restart: always
-    depends_on:
-      tpotinit:
-        condition: service_healthy
-    environment:
-     - CONPOT_CONFIG=/etc/conpot/conpot.cfg
-     - CONPOT_JSON_LOG=/var/log/conpot/conpot_ipmi.json
-     - CONPOT_LOG=/var/log/conpot/conpot_ipmi.log
-     - CONPOT_TEMPLATE=ipmi
-     - CONPOT_TMP=/tmp/conpot
-    tmpfs:
-     - /tmp/conpot:uid=2000,gid=2000
-    networks:
-     - conpot_local_ipmi
-    ports:
-     - "56006:623/udp"
-    image: ${TPOT_REPO}/conpot:${TPOT_VERSION}
-    pull_policy: ${TPOT_PULL_POLICY}
-    read_only: true
-    volumes:
-     - ${TPOT_DATA_PATH}/conpot/log:/var/log/conpot
-
-# Conpot kamstrup_382
-  conpot_kamstrup_382:
-    container_name: conpot_kamstrup_382
-    restart: always
-    depends_on:
-      tpotinit:
-        condition: service_healthy
-    environment:
-     - CONPOT_CONFIG=/etc/conpot/conpot.cfg
-     - CONPOT_JSON_LOG=/var/log/conpot/conpot_kamstrup_382.json
-     - CONPOT_LOG=/var/log/conpot/conpot_kamstrup_382.log
-     - CONPOT_TEMPLATE=kamstrup_382
-     - CONPOT_TMP=/tmp/conpot
-    tmpfs:
-     - /tmp/conpot:uid=2000,gid=2000
-    networks:
-     - conpot_local_kamstrup_382
-    ports:
-     - "56007:1025"
-     - "56008:50100"
-    image: ${TPOT_REPO}/conpot:${TPOT_VERSION}
-    pull_policy: ${TPOT_PULL_POLICY}
-    read_only: true
-    volumes:
-     - ${TPOT_DATA_PATH}/conpot/log:/var/log/conpot
-
 # Cowrie service
   cowrie:
     container_name: cowrie
-    #build: ./docker/cowrie
     restart: always
     depends_on:
       tpotinit:
@@ -213,9 +106,9 @@ services:
     networks:
       - cowrie_local
     ports:
-      - "56009:22"
-      - "56010:23"
-    image: ${TPOT_REPO}/cowrie:${TPOT_VERSION} 
+      - "22:22"
+      - "23:23"
+    image: ${TPOT_REPO}/cowrie:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
     volumes:
@@ -237,8 +130,8 @@ services:
     networks:
      - dicompot_local
     ports:
-     - "56011:11112"
-     - "56012:11112"
+     - "104:11112"
+     - "11112:11112"
     image: ${TPOT_REPO}/dicompot:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -258,22 +151,22 @@ services:
     networks:
      - dionaea_local
     ports:
-     - "56013:20"
-     - "56014:21"
-     - "56015:42"
-     - "56016:69/udp"
-     - "56017:81"
-     - "56018:135"
+     - "20:20"
+     - "21:21"
+     - "42:42"
+     - "69:69/udp"
+     - "81:81"
+     - "135:135"
      # - "443:443"
-     - "56019:445"
-     - "56020:1433"
-     - "56021:1723"
-     - "56022:1883"
-     - "56023:3306"
+     # - "445:445"
+     - "1433:1433"
+     - "1723:1723"
+     - "1883:1883"
+     - "3306:3306"
      # - "5060:5060"
      # - "5060:5060/udp"
      # - "5061:5061"
-     - "56024:27017"
+     - "27017:27017"
     image: ${TPOT_REPO}/dionaea:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -297,7 +190,7 @@ services:
     networks:
      - elasticpot_local
     ports:
-     - "56025:9200"
+     - "9200:9200"
     image: ${TPOT_REPO}/elasticpot:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -314,7 +207,7 @@ services:
     networks:
      - h0neytr4p_local
     ports:
-     - "56026:443"
+      - "443:443"
     # - "80:80"
     image: ${TPOT_REPO}/h0neytr4p:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
@@ -340,17 +233,17 @@ services:
     # - "23:23"
     # - "25:25"
     # - "80:80"
-     - "56027:110"
-     - "56028:143"
+     - "110:110"
+     - "143:143"
     # - "443:443"
-     - "56029:465"
-     - "56030:993"
-     - "56031:995"
+     - "465:465"
+     - "993:993"
+     - "995:995"
     # - "3306:3306"
     # - "3389:3389"
-     - "56032:1080"
-     - "56033:5432"
-     - "56034:5900"
+     - "1080:1080"
+     - "5432:5432"
+     - "5900:5900"
     image: ${TPOT_REPO}/heralding:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -367,32 +260,12 @@ services:
     networks:
      - honeyaml_local
     ports:
-      - "56035:8080"
+      - "3000:8080"
     image: ${TPOT_REPO}/honeyaml:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
     volumes:
      - ${TPOT_DATA_PATH}/honeyaml/log:/opt/honeyaml/log/
-
-# Honeytrap service
-  honeytrap:
-    container_name: honeytrap
-    restart: always
-    depends_on:
-      tpotinit:
-        condition: service_healthy
-    tmpfs:
-     - /tmp/honeytrap:uid=2000,gid=2000
-    network_mode: "host"
-    cap_add:
-     - NET_ADMIN
-    image: ${TPOT_REPO}/honeytrap:${TPOT_VERSION}
-    pull_policy: ${TPOT_PULL_POLICY}
-    read_only: true
-    volumes:
-     - ${TPOT_DATA_PATH}/honeytrap/attacks:/opt/honeytrap/var/attacks
-     - ${TPOT_DATA_PATH}/honeytrap/downloads:/opt/honeytrap/var/downloads
-     - ${TPOT_DATA_PATH}/honeytrap/log:/opt/honeytrap/var/log
 
 # Ipphoney service
   ipphoney:
@@ -404,7 +277,7 @@ services:
     networks:
      - ipphoney_local
     ports:
-     - "56036:631"
+     - "631:631"
     image: ${TPOT_REPO}/ipphoney:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -423,43 +296,13 @@ services:
     networks:
      - mailoney_local
     ports:
-     - "56037:25"
-     - "56038:25"
+     - "25:25"
+     - "587:25"
     image: ${TPOT_REPO}/mailoney:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
     volumes:
      - ${TPOT_DATA_PATH}/mailoney/log:/opt/mailoney/logs
-
-  beelzebub:
-    container_name: beelzebub
-    restart: always
-    depends_on:
-      tpotinit:
-        condition: service_healthy
-    networks:
-     - beelzebub_local
-    ports:
-      - "56039:22"
-    #  - "80:80"
-    #  - "2222:2222"
-    #  - "3306:3306"
-    #  - "8080:8080"
-    build: ./docker/beelzebub
-    #image: ${TPOT_REPO}/beelzebub:${TPOT_VERSION}
-    pull_policy: ${TPOT_PULL_POLICY}
-    env_file: .env
-    environment:
-      LLM_MODEL: ${BEELZEBUB_LLM_MODEL}
-      LLM_HOST: ${BEELZEBUB_LLM_HOST}
-      OLLAMA_MODEL: ${BEELZEBUB_OLLAMA_MODEL}
-      BEELZEBUB_OPENAISECRETKEY:  ${BEELZEBUB_OPENAISECRETKEY}
-      OPEN_AI_SECRET_KEY: ${BEELZEBUB_OPENAISECRETKEY}
-    read_only: true
-    volumes:
-     - ${TPOT_DATA_PATH}/beelzebub/key:/opt/beelzebub/configurations/key
-     - ${TPOT_DATA_PATH}/beelzebub/log:/opt/beelzebub/configurations/log
-
 
 # Medpot service
   medpot:
@@ -471,7 +314,7 @@ services:
     networks:
      - medpot_local
     ports:
-     - "56040:2575"
+     - "2575:2575"
     image: ${TPOT_REPO}/medpot:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -488,7 +331,7 @@ services:
     networks:
      - miniprint_local
     ports:
-      - "56041:9100"
+      - "9100:9100"
     image: ${TPOT_REPO}/miniprint:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -506,7 +349,7 @@ services:
     networks:
      - redishoneypot_local
     ports:
-     - "56042:6379"
+     - "6379:6379"
     image: ${TPOT_REPO}/redishoneypot:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -526,8 +369,8 @@ services:
      - sentrypeer_local
     ports:
 #     - "4222:4222/udp"
-     - "56043:5060/tcp"
-     - "56043:5060/udp"
+     - "5060:5060/tcp"
+     - "5060:5060/udp"
 #     - "127.0.0.1:8082:8082"
     image: ${TPOT_REPO}/sentrypeer:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
@@ -612,7 +455,7 @@ services:
     networks:
      - tanner_local
     ports:
-     - "56044:80"
+     - "80:80"
     image: ${TPOT_REPO}/snare:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
 
@@ -626,7 +469,7 @@ services:
     networks:
      - wordpot_local
     ports:
-     - "56045:80"
+     - "8080:80"
     image: ${TPOT_REPO}/wordpot:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -663,6 +506,10 @@ services:
       tpotinit:
         condition: service_healthy
     network_mode: "host"
+    cap_add:
+     - NET_ADMIN
+     - SYS_NICE
+     - NET_RAW
     image: ${TPOT_REPO}/p0f:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
@@ -676,15 +523,16 @@ services:
     depends_on:
       tpotinit:
         condition: service_healthy
-    environment:
-     - OINKCODE=${OINKCODE:-OPEN} # Default to OPEN if unset or NULL (value provided by T-Pot .env)
-    # Loading external Rules from URL
-    # - FROMURL="https://username:password@yoururl.com|https://username:password@otherurl.com"
-    network_mode: "host"
+    networks:
+     - suricata_local
     cap_add:
      - NET_ADMIN
      - SYS_NICE
      - NET_RAW
+    environment:
+     - OINKCODE=${OINKCODE:-OPEN} # Default to OPEN if unset or NULL (value provided by T-Pot .env)
+    # Loading external Rules from URL
+    # - FROMURL="https://username:password@yoururl.com|https://username:password@otherurl.com"
     image: ${TPOT_REPO}/suricata:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     volumes:
@@ -692,7 +540,7 @@ services:
 
 
 ##################
-#### Tools 
+#### Tools
 ##################
 
 #### ELK
@@ -703,12 +551,12 @@ services:
     depends_on:
       tpotinit:
         condition: service_healthy
-    networks:
-     - nginx_local
     environment:
      - bootstrap.memory_lock=true
      - ES_JAVA_OPTS=-Xms2048m -Xmx2048m
      - ES_TMPDIR=/tmp
+    networks:
+     - nginx_local
     cap_add:
      - IPC_LOCK
     ulimits:
@@ -720,7 +568,7 @@ services:
         hard: 65536
     mem_limit: 4g
     ports:
-     - "127.0.0.1:56046:9200"
+     - "127.0.0.1:64298:9200"
     image: ${TPOT_REPO}/elasticsearch:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     volumes:
@@ -737,7 +585,7 @@ services:
      - nginx_local
     mem_limit: 1g
     ports:
-     - "127.0.0.1:56047:5601"
+     - "127.0.0.1:64296:5601"
     image: ${TPOT_REPO}/kibana:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
 
@@ -757,7 +605,7 @@ services:
      - TPOT_HIVE_IP=${TPOT_HIVE_IP}
      - LS_SSL_VERIFICATION=${LS_SSL_VERIFICATION:-full}
     ports:
-     - "127.0.0.1:56048:64305"
+      - "127.0.0.1:64305:64305"
     mem_limit: 2g
     image: ${TPOT_REPO}/logstash:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
@@ -793,7 +641,7 @@ services:
     stop_signal: SIGKILL
     tty: true
     ports:
-     - "127.0.0.1:56049:64299"
+     - "127.0.0.1:64299:64299"
     image: ${TPOT_REPO}/map:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
 
@@ -860,15 +708,13 @@ services:
     networks:
      - nginx_local
     ports:
-     - "56050:64297"
-     - "56051:64294"
+     - "64297:64297"
     image: ${TPOT_REPO}/nginx:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true
     volumes:
      - ${TPOT_DATA_PATH}/nginx/cert/:/etc/nginx/cert/:ro
      - ${TPOT_DATA_PATH}/nginx/conf/nginxpasswd:/etc/nginx/nginxpasswd:ro
-     - ${TPOT_DATA_PATH}/nginx/conf/lswebpasswd:/etc/nginx/lswebpasswd:ro
      - ${TPOT_DATA_PATH}/nginx/log/:/var/log/nginx/
 
 # Spiderfoot service
@@ -881,7 +727,7 @@ services:
     networks:
      - nginx_local
     ports:
-     - "127.0.0.1:56052:8080"
+     - "127.0.0.1:64303:8080"
     image: ${TPOT_REPO}/spiderfoot:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     volumes:

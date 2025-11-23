@@ -80,10 +80,10 @@ class HoneypotManager:
         },
     }
 
-    ENDPOINT_ALIAS = {
-        "/admin-v2": "cowrie",
-        "/backup-db": "dionaea",
-        "/config-prod": "elasticpot",
+    SERVICE_ENDPOINTS = {
+        "cowrie": ["/admin-v2", "/admin", "/admin/", "/admin/login"],
+        "dionaea": ["/backup-db", "/backup-db/", "/download-db", "/download-db/"],
+        "elasticpot": ["/config-prod", "/config-prod/", "/debug", "/env"],
     }
 
     TPOT_HEADER = "#### Honeypots"
@@ -240,8 +240,8 @@ class HoneypotManager:
 
         result = {"triggered": False, "honeypot": None}
         matched_service = None
-        for endpoint, service in self.ENDPOINT_ALIAS.items():
-            if path.startswith(endpoint):
+        for service, endpoints in self.SERVICE_ENDPOINTS.items():
+            if any(path.startswith(ep) for ep in endpoints):
                 matched_service = service
                 break
         if matched_service and matched_service in self._catalog:

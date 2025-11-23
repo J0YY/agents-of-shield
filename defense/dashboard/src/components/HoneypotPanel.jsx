@@ -57,7 +57,10 @@ export default function HoneypotPanel({ honeypotTrigger }) {
     return { label: loading ? "Syncing" : "Ready", tone: loading ? "idle" : "ready" };
   }, [honeypotTrigger, loading, error]);
 
-  const deployedHoneypots = useMemo(() => managedHoneypots.filter((hp) => hp.status !== "idle"), [managedHoneypots]);
+  const triggeredHoneypots = useMemo(() => managedHoneypots.filter((hp) => hp.status === "triggered"), [managedHoneypots]);
+  const armedHoneypots = useMemo(() => managedHoneypots.filter((hp) => hp.status === "armed"), [managedHoneypots]);
+  const [showArmed, setShowArmed] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
 
   const summary = useMemo(() => {
     const total = managedHoneypots.length || 1;
@@ -117,64 +120,122 @@ export default function HoneypotPanel({ honeypotTrigger }) {
       </div>
 
       <div className="honeypot-status-grid">
-        {deployedHoneypots.length ? (
-          deployedHoneypots.map((item) => {
-          const triggered = honeypotTrigger?.endpoint === item.id;
-          const statusLabel = triggered ? "Triggered" : item.status?.toUpperCase() ?? "IDLE";
-          return (
-            <article
-              key={item.id}
-              className={`honeypot-status-card${triggered ? " is-alert" : ""}`}
-              style={{ borderColor: triggered ? "rgba(255,137,164,0.5)" : "rgba(255,255,255,0.08)" }}
-            >
-              <div
-                className="honeypot-status-orb"
-                style={{
-                  background: `radial-gradient(circle at 30% 30%, ${item.color}55, rgba(255,255,255,0.05))`,
+        {triggeredHoneypots.length ? (
+          triggeredHoneypots.map((item) => {
+            const isExpanded = expandedId === item.id;
+            const cardStatus = "alert";
+            return (
+              <article
+                key={item.id}
+                className={`honeypot-status-card is-alert${isExpanded ? " is-expanded" : ""}`}
+                style={{ borderColor: "rgba(255,137,164,0.5)" }}
+                role="button"
+                tabIndex={0}
+                onClick={() => setExpandedId((prev) => (prev === item.id ? null : item.id))}
+                onKeyPress={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    setExpandedId((prev) => (prev === item.id ? null : item.id));
+                  }
                 }}
               >
-                <span>{item.emoji}</span>
-              </div>
-              <div className="honeypot-status-body">
-                <p className="honeypot-label">{item.label}</p>
-                <p className="honeypot-method">{item.method}</p>
-                <p className="honeypot-vector">{item.vector}</p>
-              </div>
-              <div className={`honeypot-status-chip honeypot-status-chip--${triggered ? "alert" : item.status}`}>
-                {statusLabel}
-              </div>
-              <div className="honeypot-status-meta">
-                <div>
-                  <p className="meta-label">armed</p>
-                  <p className="meta-value">{formatTimestamp(item.armed_at)}</p>
+                <div
+                  className="honeypot-status-orb"
+                  style={{
+                    background: `radial-gradient(circle at 30% 30%, ${item.color}55, rgba(255,255,255,0.05))`,
+                  }}
+                >
+                  <span>{item.emoji}</span>
                 </div>
-                <div>
-                  <p className="meta-label">last Δ</p>
-                  <p className="meta-value">{item.last_delta != null ? `+${item.last_delta}` : "—"}</p>
+                <div className="honeypot-status-body">
+                  <p className="honeypot-label">{item.label}</p>
+                  <p className="honeypot-method">{item.method}</p>
+                  <p className="honeypot-vector">{item.vector}</p>
                 </div>
-              </div>
-              {triggered && honeypotTrigger?.payload ? (
-                <pre className="honeypot-status-payload">
-                  {JSON.stringify(honeypotTrigger.payload, null, 2)}
-                </pre>
-              ) : null}
-              {item.recent_commands?.length ? (
-                <div className="honeypot-log">
-                  <p className="meta-label">ssh log</p>
-                  <ul>
-                    {item.recent_commands.map((cmd) => (
-                      <li key={cmd}>{cmd}</li>
-                    ))}
-                  </ul>
+                <div className={`honeypot-status-chip honeypot-status-chip--${cardStatus}`}>
+                  {isExpanded ? "Hide log" : "Triggered"}
                 </div>
-              ) : null}
-            </article>
-          );
-        })
+                <div className="honeypot-status-meta">
+                  <div>
+                    <p className="meta-label">triggered</p>
+                    <p className="meta-value">{formatTimestamp(item.last_trigger_at)}</p>
+                  </div>
+                  <div>
+                    <p className="meta-label">step</p>
+                    <p className="meta-value">{item.last_trigger_step ?? "—"}</p>
+                  </div>
+                </div>
+                {isExpanded ? (
+                  <div className="honeypot-status-details">
+                    <p className="meta-label">payload</p>
+                    <pre className="honeypot-status-payload">
+                      {JSON.stringify(item.payload ?? honeypotTrigger?.payload ?? {}, null, 2)}
+                    </pre>
+                    {item.recent_commands?.length ? (
+                      <div className="honeypot-log">
+                        <p className="meta-label">ssh log</p>
+                        <ul>
+                          {item.recent_commands.map((cmd) => (
+                            <li key={cmd}>{cmd}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-white/60 mt-3">No SSH commands captured yet.</p>
+                    )}
+                  </div>
+                ) : null}
+              </article>
+            );
+          })
         ) : (
-          <p className="text-xs text-white/60">No honeypots armed yet — deploy a loadout to populate this view.</p>
+          <p className="text-xs text-white/60">No honeypots have been tripped yet.</p>
         )}
       </div>
+
+      {armedHoneypots.length ? (
+        <div className="honeypot-armed-section">
+          <button
+            type="button"
+            className="honeypot-armed-toggle"
+            onClick={() => setShowArmed((prev) => !prev)}
+          >
+            <span>Armed loadout · {armedHoneypots.length}</span>
+            <span className={`chevron ${showArmed ? "open" : ""}`} aria-hidden="true">
+              ▾
+            </span>
+          </button>
+          {showArmed ? (
+            <div className="honeypot-status-grid armed-grid">
+              {armedHoneypots.map((item) => (
+                <article key={item.id} className="honeypot-status-card armed-card">
+                  <div
+                    className="honeypot-status-orb"
+                    style={{
+                      background: `radial-gradient(circle at 30% 30%, ${item.color}40, rgba(255,255,255,0.02))`,
+                    }}
+                  >
+                    <span>{item.emoji}</span>
+                  </div>
+                  <div className="honeypot-status-body">
+                    <p className="honeypot-label">{item.label}</p>
+                    <p className="honeypot-vector">{item.vector}</p>
+                  </div>
+                  <div className="honeypot-status-meta">
+                    <div>
+                      <p className="meta-label">armed</p>
+                      <p className="meta-value">{formatTimestamp(item.armed_at)}</p>
+                    </div>
+                    <div>
+                      <p className="meta-label">last Δ</p>
+                      <p className="meta-value">{item.last_delta != null ? `+${item.last_delta}` : "—"}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="honeypot-secondary-panel">
         <div className="honeypot-secondary-header">

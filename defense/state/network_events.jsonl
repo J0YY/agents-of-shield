@@ -1,2 +1,22 @@
 {"step": 99, "endpoint": "http://localhost:3000/admin-v2", "method": "GET", "status": 404, "summary": "manual probe", "timestamp": "2025-11-22T21:30:00Z"}
 {"step": 42, "endpoint": "http://localhost:3000/admin-v2", "method": "GET", "status": 404, "summary": "manual probe", "timestamp": "2025-11-22T22:05:00Z"}
+{"step": 1, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed HTTP probes and scans on admin endpoints.", "timestamp": "2025-11-23T09:51:18.874004"}
+{"step": 1, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Conducted port scan and banner grabs on SSH.", "timestamp": "2025-11-23T09:51:34.025784"}
+{"step": 2, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed directory brute-forcing and Nikto scan on primary target", "timestamp": "2025-11-23T09:52:29.210778"}
+{"step": 2, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Attempted SSH scan and brute force login on localhost", "timestamp": "2025-11-23T09:52:37.741884"}
+{"step": 3, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed directory enumeration, vulnerability scan, and SQL injection tests.", "timestamp": "2025-11-23T09:53:27.473918"}
+{"step": 3, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Scanned SSH on localhost and performed quick command execution.", "timestamp": "2025-11-23T09:53:34.840259"}
+{"step": 4, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed web probing and vulnerability scans.", "timestamp": "2025-11-23T09:54:26.393317"}
+{"step": 4, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Performed Nmap scan and Hydra brute-force login attempt on localhost SSH.", "timestamp": "2025-11-23T09:54:33.306680"}
+{"step": 5, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed directory enumeration, SQL injection tests and security scan.", "timestamp": "2025-11-23T09:55:21.780846"}
+{"step": 5, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Port sweep on localhost SSH service, attempted command execution.", "timestamp": "2025-11-23T09:55:27.716440"}
+{"step": 1, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Initiated further HTTP probing on discovered paths.", "timestamp": "2025-11-23T10:08:02.295086"}
+{"step": 1, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Port and service scan on localhost SSH", "timestamp": "2025-11-23T10:08:18.990494"}
+{"step": 2, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed HTTP probing and scans on target", "timestamp": "2025-11-23T10:09:08.684690"}
+{"step": 2, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Port sweep and SSH login attempts on localhost", "timestamp": "2025-11-23T10:09:18.844151"}
+{"step": 3, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed directory enumeration and vulnerability scan", "timestamp": "2025-11-23T10:10:09.122671"}
+{"step": 3, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Nmap scan revealed closed SSH port on localhost.", "timestamp": "2025-11-23T10:10:17.674878"}
+{"step": 4, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed directory enumeration on backup-db and SQL injection test on login", "timestamp": "2025-11-23T10:10:34.044269"}
+{"step": 4, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Attempted port scan and SQL injection test.", "timestamp": "2025-11-23T10:10:44.315559"}
+{"step": 5, "endpoint": "http://host.docker.internal:3000", "method": "WEB_MCP", "status": 0, "summary": "Executed web service probes and SQL injection attempts.", "timestamp": "2025-11-23T10:11:34.298110"}
+{"step": 5, "endpoint": "ssh://localhost:22", "method": "SYSTEM_MCP", "status": 0, "summary": "Performed port scan on localhost and attempted SSH login.", "timestamp": "2025-11-23T10:11:55.858222"}

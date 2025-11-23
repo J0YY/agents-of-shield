@@ -17,7 +17,9 @@
       "path": "/admin-v2"
     }
   ],
-  "suspicious_endpoints": [],
+  "suspicious_endpoints": [
+    ""
+  ],
   "future_recommendations": [
     "Promote honeypot telemetry to SIEM rules"
   ]
