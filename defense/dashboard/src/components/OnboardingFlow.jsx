@@ -7,25 +7,7 @@ const heroPhases = [
   { id: "connecting", label: "Connect", detail: "Agent + honeypots arm" },
 ];
 
-const envFields = [
-  {
-    label: "Hosting provider",
-    placeholder: "Render · Fly.io · Railway · EC2",
-    helper: "So we know how to mirror prod safely.",
-  },
-  {
-    label: "Primary datastore",
-    placeholder: "Postgres · PlanetScale · SQLite",
-    helper: "Used to fabricate believable decoy data.",
-  },
-  {
-    label: "Read-only log/API key",
-    placeholder: "Paste token · e.g. Logtail, BetterStack",
-    helper: "Lets the agent stream attack telemetry only.",
-  },
-];
-
-function SourceStep({ fileName, onFileSelect, onNext }) {
+function SourceStep({ fileName, repoUrl, onFileSelect, onRepoChange, onNext, onAutofill }) {
   return (
     <section className="launch-panel glass-panel launch-step-card">
       <div className="step-header">
@@ -44,7 +26,13 @@ function SourceStep({ fileName, onFileSelect, onNext }) {
 
         <label className="text-field">
           <span className="text-label">GitHub / GitLab repo</span>
-          <input type="text" className="text-input" placeholder="https://github.com/acme/saas-app" />
+          <input
+            type="text"
+            className="text-input"
+            placeholder="https://github.com/acme/saas-app"
+            value={repoUrl}
+            onChange={(event) => onRepoChange(event.target.value)}
+          />
           <span className="text-helper">We fingerprint package.json, frameworks, and exposed routes automatically.</span>
         </label>
       </div>
@@ -53,13 +41,27 @@ function SourceStep({ fileName, onFileSelect, onNext }) {
         <button type="button" className="primary-link step-button" onClick={onNext}>
           Next
         </button>
-        <p className="step-note">Demo only — nothing actually uploads. We’re showcasing the workflow.</p>
+        <button type="button" className="step-secondary" onClick={onAutofill}>
+          Autofill demo data
+        </button>
+        {/* <p className="step-note">Demo only — nothing actually uploads. We’re showcasing the workflow.</p> */}
       </div>
     </section>
   );
 }
 
-function EnvironmentStep({ onSubmit }) {
+function EnvironmentStep({
+  hosting,
+  datastore,
+  logKey,
+  dns,
+  onHostingChange,
+  onDatastoreChange,
+  onLogKeyChange,
+  onDnsChange,
+  onAutofill,
+  onSubmit,
+}) {
   return (
     <section className="launch-panel glass-panel launch-step-card">
       <div className="step-header">
@@ -69,24 +71,61 @@ function EnvironmentStep({ onSubmit }) {
       </div>
 
       <div className="input-stack">
-        {envFields.map((field) => (
-          <label key={field.label} className="text-field">
-            <span className="text-label">{field.label}</span>
-            <input type="text" className="text-input" placeholder={field.placeholder} />
-            <span className="text-helper">{field.helper}</span>
-          </label>
-        ))}
+        <label className="text-field optional-field">
+          <span className="text-label">Hosting provider</span>
+          <input
+            type="text"
+            className="text-input"
+            placeholder="Render · Fly.io · Railway · EC2"
+            value={hosting}
+            onChange={(event) => onHostingChange(event.target.value)}
+          />
+          <span className="text-helper">So we know how to mirror prod safely.</span>
+        </label>
+
+        <label className="text-field">
+          <span className="text-label">Primary datastore</span>
+          <input
+            type="text"
+            className="text-input"
+            placeholder="Postgres · PlanetScale · SQLite"
+            value={datastore}
+            onChange={(event) => onDatastoreChange(event.target.value)}
+          />
+          <span className="text-helper">Used to fabricate believable decoy data.</span>
+        </label>
+
+        <label className="text-field">
+          <span className="text-label">Read-only log/API key</span>
+          <input
+            type="text"
+            className="text-input"
+            placeholder="Paste token · e.g. Logtail, BetterStack"
+            value={logKey}
+            onChange={(event) => onLogKeyChange(event.target.value)}
+          />
+          <span className="text-helper">Lets the agent stream attack telemetry only.</span>
+        </label>
 
         <label className="text-field optional-field">
           <span className="text-label">Optional: DNS / Cloudflare access</span>
-          <input type="text" className="text-input" placeholder="decoy.yourdomain.com" />
+          <input
+            type="text"
+            className="text-input"
+            placeholder="decoy.yourdomain.com"
+            value={dns}
+            onChange={(event) => onDnsChange(event.target.value)}
+          />
           <span className="text-helper">Let us auto-provision fake admin portals and backup routes per tenant.</span>
         </label>
       </div>
 
       <div className="step-actions">
         <button type="button" className="primary-link step-button" onClick={onSubmit}>
-          Simulate secure scan
+          Secure scan
+        </button>
+        <button type="button" className="step-secondary" onClick={onAutofill}>
+          Autofill demo data
         </button>
         <p className="step-note">We use this info to suggest honeypots that match your actual stack.</p>
       </div>
@@ -108,7 +147,7 @@ function ProgressScreen({ title, subtitle, progress, label }) {
         </div>
         <div className="progress-caption">
           <span>{Math.round(progress)}%</span>
-          <p>~5 seconds in this demo</p>
+          <p>Processing...</p>
         </div>
       </div>
     </section>
@@ -119,6 +158,11 @@ export default function OnboardingFlow() {
   const [phase, setPhase] = useState("source");
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState(null);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [envHosting, setEnvHosting] = useState("");
+  const [envDatastore, setEnvDatastore] = useState("");
+  const [envLogKey, setEnvLogKey] = useState("");
+  const [envDns, setEnvDns] = useState("");
 
   useEffect(() => {
     if (phase !== "scanning" && phase !== "connecting") {
@@ -192,9 +236,15 @@ export default function OnboardingFlow() {
       {phase === "source" && (
         <SourceStep
           fileName={fileName}
+          repoUrl={repoUrl}
           onFileSelect={(event) => {
             const file = event.target.files?.[0];
             setFileName(file ? file.name : null);
+          }}
+          onRepoChange={setRepoUrl}
+          onAutofill={() => {
+            setFileName("founder-saas.zip");
+            setRepoUrl("https://github.com/pet-grooming/app");
           }}
           onNext={() => setPhase("scanning")}
         />
@@ -209,7 +259,25 @@ export default function OnboardingFlow() {
         />
       )}
 
-      {phase === "environment" && <EnvironmentStep onSubmit={() => setPhase("connecting")} />}
+      {phase === "environment" && (
+        <EnvironmentStep
+          hosting={envHosting}
+          datastore={envDatastore}
+          logKey={envLogKey}
+          dns={envDns}
+          onHostingChange={setEnvHosting}
+          onDatastoreChange={setEnvDatastore}
+          onLogKeyChange={setEnvLogKey}
+          onDnsChange={setEnvDns}
+          onAutofill={() => {
+            setEnvHosting("Render · FRA-1 auto scale");
+            setEnvDatastore("Postgres (Supabase) · read replica");
+            setEnvLogKey("LOGTAIL-RO-81aa…9fe");
+            setEnvDns("decoy.agentshield.dev");
+          }}
+          onSubmit={() => setPhase("connecting")}
+        />
+      )}
 
       {phase === "connecting" && (
         <ProgressScreen
