@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchHoneypots } from "../utils/api";
 
-const REFRESH_MS = 20000;
+const REFRESH_MS = 2000;
 
 function formatTimestamp(value) {
   if (!value) return "—";
