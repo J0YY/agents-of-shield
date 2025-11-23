@@ -103,10 +103,10 @@
       "method": "Emulates shell access to capture brute-force attempts.",
       "emoji": "\ud83d\udc0d",
       "color": "#ffb5d6",
-      "armed": false,
-      "armed_at": null,
-      "armed_reason": null,
-      "armed_source": null,
+      "armed": true,
+      "armed_at": "2025-11-22T22:54:35.463408",
+      "armed_reason": "pre_attack_loadout",
+      "armed_source": "pre_attack_view",
       "last_delta": null,
       "last_trigger_step": 42,
       "last_trigger_at": "2025-11-22T22:05:00Z",
@@ -135,10 +135,10 @@
       "method": "Listens on common enterprise ports and stores payloads.",
       "emoji": "\ud83e\uddea",
       "color": "#a5f0ff",
-      "armed": false,
-      "armed_at": null,
-      "armed_reason": null,
-      "armed_source": null,
+      "armed": true,
+      "armed_at": "2025-11-22T22:54:35.463408",
+      "armed_reason": "pre_attack_loadout",
+      "armed_source": "pre_attack_view",
       "last_delta": null,
       "last_trigger_step": null,
       "last_trigger_at": null,
@@ -433,8 +433,8 @@
       "payload": {}
     }
   },
-  "last_armed_at": "2025-11-22T21:25:02.280369",
-  "last_arm_reason": "traffic_spike",
-  "last_arm_source": "request_rate_chart",
-  "last_delta": 41
+  "last_armed_at": "2025-11-22T22:54:35.463408",
+  "last_arm_reason": "pre_attack_loadout",
+  "last_arm_source": "pre_attack_view",
+  "last_delta": null
 }

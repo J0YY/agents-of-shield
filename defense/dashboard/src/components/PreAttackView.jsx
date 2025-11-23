@@ -153,10 +153,10 @@ export default function PreAttackView() {
         source: "pre_attack_view",
         services,
       });
-      setConfirmation({
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    setConfirmation({
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         traps: services.length,
-      });
+    });
     } catch (err) {
       setLoadoutError(err.message || "Unable to arm decoys");
     } finally {

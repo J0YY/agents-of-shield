@@ -178,10 +178,10 @@ class HoneypotManager:
                     "payload": event.get("action", {}).get("payload", {}),
                 }
             )
-            self._persist()
-            result.update(
-                {
-                    "triggered": True,
+                self._persist()
+                result.update(
+                    {
+                        "triggered": True,
                     "honeypot": matched_service,
                     "label": meta["label"],
                     "description": meta["description"],
