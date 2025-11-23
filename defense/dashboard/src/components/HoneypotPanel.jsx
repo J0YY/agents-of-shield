@@ -158,6 +158,16 @@ export default function HoneypotPanel({ honeypotTrigger }) {
                   {JSON.stringify(honeypotTrigger.payload, null, 2)}
                 </pre>
               ) : null}
+              {item.recent_commands?.length ? (
+                <div className="honeypot-log">
+                  <p className="meta-label">ssh log</p>
+                  <ul>
+                    {item.recent_commands.map((cmd) => (
+                      <li key={cmd}>{cmd}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </article>
           );
         })

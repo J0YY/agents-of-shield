@@ -197,7 +197,8 @@ async def arm_honeypots(payload: HoneypotArmRequest):
     )
     console.log(
         f"[bold cyan]HONEYPOTS[/] armed via {source} "
-        f"(reason={payload.reason or 'unspecified'}, Δ={payload.delta or 0})"
+        f"(reason={payload.reason or 'unspecified'}, Δ={payload.delta or 0}, "
+        f"services={payload.services or 'all'})"
     )
     return JSONResponse({"status": "armed", **report})
 

@@ -53,3 +53,7 @@ export function fetchHoneypots(signal) {
   return doFetch("/honeypots", signal);
 }
 
+export function fetchReconReport(signal) {
+  return doFetch("/reports/latest?fmt=json", signal);
+}
+

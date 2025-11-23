@@ -63,7 +63,7 @@ class AttackMemory:
 
     # ------------------------------------------------------------------ updates
 
-    def record_step(self, step: int, task: str, output: str) -> Dict[str, Any]:
+    def record_step(self, step: int, task: str, output: str, channel: str) -> Dict[str, Any]:
         parsed = _safe_json_parse(output)
         trimmed_output = output
         if isinstance(trimmed_output, str) and len(trimmed_output) > 1500:
@@ -72,6 +72,7 @@ class AttackMemory:
             "step": step,
             "task": task,
             "raw_output": trimmed_output,
+            "channel": channel,
         }
         if parsed:
             entry.update(parsed)
@@ -109,7 +110,8 @@ class AttackMemory:
         lines = []
         for item in recent:
             summary = item.get("action_summary") or item.get("raw_output", "").split("\n", 1)[0]
-            lines.append(f"Step {item.get('step')}: {summary}")
+            channel = item.get("channel", "WEB")
+            lines.append(f"{channel} step {item.get('step')}: {summary}")
         findings = self.state.get("findings") or []
         if findings:
             lines.append("Findings: " + "; ".join(findings[-3:]))

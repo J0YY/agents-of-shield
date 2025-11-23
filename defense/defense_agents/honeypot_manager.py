@@ -5,7 +5,33 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
+import logging
+import os
+import subprocess
+import sys
+from collections import deque
 from urllib.parse import urlparse
+
+
+logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+TPOT_SCRIPT_PATH = Path(
+    os.getenv("TPOT_SCRIPT_PATH", BASE_DIR / "tarpit_boxes" / "tpot.py")
+).resolve()
+TARPIT_LOG_PATH = Path(
+    os.getenv("TARPIT_SSH_LOG", BASE_DIR / "tarpit_boxes" / "ssh_commands.log")
+).resolve()
+TARPIT_STATE_FILE = Path(
+    os.getenv("TARPIT_STATE_FILE", BASE_DIR / "state" / "tarpit_state.json")
+).resolve()
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 class HoneypotManager:
@@ -69,6 +95,8 @@ class HoneypotManager:
         self._tpot_error = None
         self._tpot_services = self._discover_tpot_services()
         self._catalog = self._build_catalog()
+        self.runtime_enabled = _env_bool("TPOT_AUTOSTART_ENABLED", True)
+        self.stop_unselected = _env_bool("TPOT_STOP_UNSELECTED", False)
         self._state = self._load_state()
 
     def _build_catalog(self) -> Dict[str, Dict[str, str]]:
@@ -151,6 +179,58 @@ class HoneypotManager:
             self._tpot_error = "No honeypot services detected in compose file"
         return names
 
+    def _invoke_tpot(self, action: str, services: List[str]) -> bool:
+        if not self.runtime_enabled or not services:
+            return False
+        if not TPOT_SCRIPT_PATH.exists():
+            logger.warning("TPot controller script not found at %s", TPOT_SCRIPT_PATH)
+            return False
+        command = [sys.executable, str(TPOT_SCRIPT_PATH), action, *services]
+        try:
+            subprocess.run(command, check=True, capture_output=True, text=True)
+            logger.info("TPot %s executed for services: %s", action, ", ".join(services))
+            return True
+        except subprocess.CalledProcessError as exc:
+            logger.warning("TPot %s failed: %s", action, exc)
+            if exc.stdout:
+                logger.debug("TPot stdout: %s", exc.stdout)
+            if exc.stderr:
+                logger.debug("TPot stderr: %s", exc.stderr)
+            return False
+
+    def _sync_runtime(self, target_services: List[str]) -> None:
+        started = self._invoke_tpot("start", sorted(target_services))
+        if self.stop_unselected:
+            remaining = [svc for svc in self._catalog if svc not in target_services]
+            if remaining:
+                self._invoke_tpot("stop", remaining)
+        if started and "cowrie" in target_services:
+            self._write_tarpit_state({"armed": True, "services": target_services})
+        elif self.stop_unselected:
+            self._write_tarpit_state({"armed": bool(target_services), "services": target_services})
+
+    def _write_tarpit_state(self, payload: Dict[str, Any]) -> None:
+        try:
+            TARPIT_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            TARPIT_STATE_FILE.write_text(json.dumps({**payload, "timestamp": datetime.utcnow().isoformat()}))
+        except OSError as exc:
+            logger.debug("Unable to update tarpit state file: %s", exc)
+
+    def _tail_tarpit_log(self, limit: int = 5) -> List[str]:
+        if not TARPIT_LOG_PATH.exists():
+            return []
+        try:
+            with TARPIT_LOG_PATH.open("r", encoding="utf-8", errors="ignore") as handle:
+                dq: deque[str] = deque(maxlen=limit)
+                for line in handle:
+                    clean = line.strip()
+                    if clean:
+                        dq.append(clean)
+            return list(dq)
+        except OSError as exc:
+            logger.debug("Unable to read tarpit log: %s", exc)
+            return []
+
     def _persist(self) -> None:
         self.state_file.write_text(json.dumps(self._state, indent=2), encoding="utf-8")
 
@@ -178,10 +258,10 @@ class HoneypotManager:
                     "payload": event.get("action", {}).get("payload", {}),
                 }
             )
-                self._persist()
-                result.update(
-                    {
-                        "triggered": True,
+            self._persist()
+            result.update(
+                {
+                    "triggered": True,
                     "honeypot": matched_service,
                     "label": meta["label"],
                     "description": meta["description"],
@@ -202,6 +282,8 @@ class HoneypotManager:
         timestamp = datetime.utcnow().isoformat()
         armed_records: List[Dict[str, Any]] = []
         target_set = {svc for svc in (services or self._catalog.keys()) if svc in self._catalog}
+        if not target_set:
+            target_set = set(self._catalog.keys())
 
         for service, meta in self._catalog.items():
             record = self._state["honeypots"].setdefault(service, self._default_entry(service))
@@ -244,6 +326,8 @@ class HoneypotManager:
         self._state["last_delta"] = delta
         self._persist()
 
+        self._sync_runtime(sorted(target_set))
+
         return {"armed_at": timestamp, "honeypots": armed_records}
 
     def inventory(self) -> Dict[str, Any]:
@@ -270,6 +354,10 @@ class HoneypotManager:
                     "last_trigger_at": record.get("last_trigger_at"),
                 }
             )
+            if service == "cowrie":
+                commands = self._tail_tarpit_log()
+                if commands:
+                    managed[-1]["recent_commands"] = commands
 
         tpot_entries = [
             {
