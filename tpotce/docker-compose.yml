@@ -4,6 +4,10 @@ networks:
   adbhoney_local:
   ciscoasa_local:
   cowrie_local:
+  conpot_local_IEC104:
+  conpot_local_guardian_ast:
+  conpot_local_ipmi:
+  conpot_local_kamstrup_382:
   dicompot_local:
   dionaea_local:
   elasticpot_local:
@@ -134,8 +138,8 @@ services:
     networks:
       - cowrie_local
     ports:
-      - "22:22"
-      - "23:23"
+      - "2222:22"
+      - "2323:23"
     image: ${TPOT_REPO}/cowrie:${TPOT_VERSION}
     pull_policy: ${TPOT_PULL_POLICY}
     read_only: true

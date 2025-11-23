@@ -239,6 +239,76 @@
       "step": 23,
       "endpoint": "cowrie",
       "timestamp": "2025-11-23T11:46:25.817926Z"
+    },
+    {
+      "step": 24,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.762140Z"
+    },
+    {
+      "step": 24,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.762140Z"
+    },
+    {
+      "step": 25,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.766958Z"
+    },
+    {
+      "step": 25,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.766958Z"
+    },
+    {
+      "step": 26,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.769353Z"
+    },
+    {
+      "step": 26,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.769353Z"
+    },
+    {
+      "step": 27,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.772242Z"
+    },
+    {
+      "step": 27,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.772242Z"
+    },
+    {
+      "step": 28,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.774705Z"
+    },
+    {
+      "step": 28,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.774705Z"
+    },
+    {
+      "step": 28,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.774705Z"
+    },
+    {
+      "step": 29,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.780284Z"
+    },
+    {
+      "step": 30,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T11:46:25.782121Z"
+    },
+    {
+      "step": 31,
+      "endpoint": "cowrie",
+      "timestamp": "2025-11-23T16:46:25.783702Z"
     }
   ],
   "attack_patterns": [
