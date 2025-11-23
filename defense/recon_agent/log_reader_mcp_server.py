@@ -44,7 +44,7 @@ def read_network_logs(
     if log_path:
         log_file = Path(log_path).expanduser().resolve()
     else:
-        log_file = base_dir / "vulnerable-app" / "attack_log.json"
+        log_file = base_dir / "attack_log.json"
 
     if not log_file.exists():
         return {
@@ -111,7 +111,7 @@ def get_all_network_logs(
     if log_path:
         log_file = Path(log_path).expanduser().resolve()
     else:
-        log_file = base_dir / "vulnerable-app" / "attack_log.json"
+        log_file = base_dir / "attack_log.json"
 
     if not log_file.exists():
         return {
