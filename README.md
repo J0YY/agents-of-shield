@@ -178,4 +178,39 @@ All offensive tooling stays inside this sandbox and exists solely to benchmark d
 
 ---
 
+# 🙌 Credits
+
+Built for the def/acc hackathon in London by Team Security Track to demonstrate that enterprise-grade defense can be push-button accessible for every founder.
+
+
+[Note to self]
+These are all terminals that need to be running for this to work:
+
+1. vulnerable web app
+joyyang@Air-de-Joy-2 vulnerable-app % npm start 
+
+2. dashboard web
+joyyang@Air-de-Joy-2 dashboard % npm run dev
+
+3. the docker setup for kali mcp server
+
+4. attacker3 (in venv)
+joyyang@Air-de-Joy-2 attacker3 % docker run -it --rm redteamagent AutoStrike \
+  --base-url http://localhost:3000 \
+  --http-host-alias host.docker.internal \
+  --ssh-host 192.168.65.1 \
+  --ssh-host-alias host.docker.internal \
+  --ssh-port 2222 \
+  --ssh-passwords password,root,12345,admin,changeme \
+  --ssh-cycles 10 \
+  --noise-requests 600 \
+  --noise-concurrency 60
+
+5. defense orchestrator
+(.venv) joyyang@Air-de-Joy-2 defense %    uvicorn orchestrator.orchestrator:app --reload --port 7700
+  
+6. owrie bridge for honeypot - 
+joyyang@Air-de-Joy-2 defense %   python tools/cowrie_bridge.py --api http://localhost:7700
+[cowrie-bridge] Starting from offset 611786, step 1047
+
 Thank you for reading! :)
