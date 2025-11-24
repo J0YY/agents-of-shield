@@ -182,7 +182,6 @@ All offensive tooling stays inside this sandbox and exists solely to benchmark d
 
 Built for the def/acc hackathon in London by Team Security Track to demonstrate that enterprise-grade defense can be push-button accessible for every founder.
 
-
 [Note to self]
 These are all terminals that need to be running for this to work:
 
