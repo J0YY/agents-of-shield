@@ -1,0 +1,1709 @@
+manifest:
+  version: "0.1.2"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: j0yy/agents-of-shield
+    source: https://github.com/j0yy/agents-of-shield
+    branch: main
+    commit: "6a91a0c8"
+    scope: [attacker/agent_attack.py, attacker/agents/orchestrator.py, attacker/agents/perception.py, attacker/agents/planner.py,
+      attacker/agents/world_model.py, attacker2/agent_attack.py, attacker2/kali_mcp/__init__.py, attacker2/memory.py, attacker3/src/redteamagent/entry.py,
+      attacker3/src/redteamagent/scripts/auto_attack.py, defense/deception_agent/deception_agent.py, defense/deception_agent/deception_response_mcp_server.py,
+      defense/initial_defense_orchestrator/filesystem_mcp_server.py, defense/initial_defense_orchestrator/initial_defense_orchestrator.py,
+      defense/initial_defense_orchestrator/node_runner_mcp_server.py, defense/initial_defense_orchestrator/tool_logging_hooks.py,
+      defense/obfuscation_agent/obfuscation_agent.py, defense/orchestrator/orchestrator.py, defense/reactive_defense_orchestrator/reactive_defense_orchestrator.py,
+      defense/recon_agent/log_reader_mcp_server.py, defense/recon_agent/recon_agent.py, defense/recon_agent_pcap/__init__.py,
+      defense/recon_agent_pcap/recon_agent_pcap.py, defense/tarpit_boxes/tpot_agent.py]
+  issued:
+    by: A2AS.org
+    at: '2026-01-26T16:10:46Z'
+  signatures:
+    digest: sha256:gHFFhWR1MsWnPBZYDETrtlIf1pne-E-f80001WbSndw
+    key: ed25519:Lhom6Md9WWeuTP3uwImNfK1Y3Dgsf3qBEHhXN_qfkeA
+    sig: ed25519:qXpwZHs9Q_ZaCtl6yE63LLkML2ZGmG0yZeV0jSMxpcsQ09V-LYuLO4PtkuQILnupAT4YzhpylK5q0kCCqArSCw
+
+agents:
+  agent:
+    type: instance
+    models: [gpt-4o-mini]
+    mcp: [log_reader_mcp_server]
+    params:
+      function: _investigate_with_agents
+      name: ReconAgent
+      instructions: [You are an attack reconnaissance agent analyzing network traffic logs., 'LOG FORMAT:', '- The logs are
+          at vulnerable-app/attack_log.json in JSONL format (one JSON per line)', '- Each entry has: timestamp, ip, method,
+          endpoint, query (object), body (object, optional)', '- Example: {"timestamp":"...","ip":"::1","method":"GET","endpoint":"/login","query":{},"body":{}}',
+        'HOW, FOR EXAMPLE, TO READ LOGS:', '- Use the read_network_logs tool from NetworkLogReaderServer (it should be in
+          your available tools)', '- Call it with lines=50 and working_dir parameter set to the working directory provided
+          in the task', '- The tool returns a dictionary with ''entries'' (list of log objects) and ''total_count''', '- Analyze
+          the entries in the ''entries'' list', 'WHAT TO LOOK FOR, INCLUDING BUT NOT LIMITED TO:', '- SQL injection: ''OR
+          1=1'', ''OR'', UNION, SELECT in query parameters or body values', '- Path traversal: ../, ..\, %2e%2e in endpoints',
+        '- Reconnaissance: Access to /admin, /backup-db, /download-db, /config, /debug', '- Honeypot hits: /backup-db, /admin-v2,
+          /config-prod endpoints', '- Suspicious patterns: Canary tokens, repeated probing, etc.', 'OUTPUT FORMAT:', 'Return
+          a JSON object with this exact structure:', '{', '"attack_assessment": {', '"attack_type": "sql_injection|path_traversal|reconnaissance|unknown",',
+        '"target": "endpoint or multiple_endpoints",', '"severity": "low|medium|high|critical",', '"confidence": "low|medium|high"',
+        '},', '"evidence": ["specific finding 1", "specific finding 2", ...],', '"intelligence": {"total_requests": <use total_count
+          from tool>, "unique_endpoints": N, "attack_count": N}', '}', 'CRITICAL: You MUST call the read_network_logs tool
+          first to get the log data before analyzing!']
+  agent.build_obfuscation_agent:
+    type: factory
+    models: [gpt-4.1-mini]
+    mcp: [obfuscation_mcp_server]
+    params:
+      function: build_obfuscation_agent
+      name: ObfuscationAgent
+      instructions: [You are a web application obfuscation subagent., 'You have access to tools from JsObfuscatorServer:',
+        '- `obfuscate_directory(source_dir, output_dir, ...)`   Recursively copies a directory, obfuscating .js/.jsx files
+          and   skipping common dependency/build directories. Non-JS files are   copied only if they do not already exist
+          in the output.', '- `minify_html_directory(source_dir, output_dir, ...)`   Recursively copies a directory, minifying
+          .html/.htm/.ejs files and   skipping common dependency/build directories. Non-HTML files are   copied only if they
+          do not already exist in the output.', '- `minify_css_directory(source_dir, output_dir, ...)`   Recursively copies
+          a directory, minifying .css files and   skipping common dependency/build directories. Non-CSS files are   copied
+          only if they do not already exist in the output.', 'You are called by an orchestrator agent that provides you with:',
+        '- a `source_dir` (root of the target web app code), and', '- an `output_dir` (where obfuscated/minified output should
+          be written).', 'Your job:', 1) Parse the input message to identify `source_dir` and `output_dir`    (they will be
+          given explicitly in the text)., '2) Call `obfuscate_directory(source_dir, output_dir, ...)` exactly once.', '3)
+          Call `minify_html_directory(source_dir, output_dir, ...)` exactly once.', '4) Call `minify_css_directory(source_dir,
+          output_dir, ...)` exactly once.', Always use the same source_dir and output_dir for all three calls., Do not ask
+          follow-up questions. Do not attempt to implement any obfuscation or minification yourself; always delegate to these
+          tools., 'After all three tools have completed, synthesize their JSON results into a concise final summary describing:',
+        '- which directories were processed,', '- how many files were obfuscated/minified/copied, and', '- where the final
+          outputs are located.']
+  agent.build_recon_agent_pcap:
+    type: factory
+    models: [gpt-4o-mini]
+    mcp: [pcap_analysis_mcp_server]
+    params:
+      function: build_recon_agent_pcap
+      name: ReconAgentPcap
+      instructions: [You are a network traffic reconnaissance agent analyzing packet captures for security threats., 'PCAP
+          FILE FORMAT:', '- The PCAP file contains network packet captures in standard pcap format', '- Default location:
+          traffic.pcap in the working directory', '- Analyzed using tshark tools via MCP server', 'HOW TO ANALYZE PCAP FILES:',
+        '- Use read_pcap_summary to get an overview (protocols, IPs, ports)', '- Use detect_port_scanning to find port scan
+          attempts', '- Use detect_http_anomalies to identify HTTP enumeration and scanners', '- Use detect_data_exfiltration
+          to find large data transfers', '- Use get_traffic_timeline to analyze patterns over time', '- All tools accept pcap_file
+          and working_dir parameters', 'WHAT TO LOOK FOR:', '- Port scanning: Multiple SYN packets to different ports from
+          same source', '- HTTP enumeration: Scanner user agents (gobuster, dirbuster), high request volume, many unique paths',
+        '- Data exfiltration: Large outbound transfers (>1MB by default)', '- Traffic anomalies: Unusual protocol distributions,
+          timing patterns', 'OUTPUT FORMAT:', 'Return a JSON object with this exact structure:', '{', '"attack_assessment":
+          {', '"attack_type": "port_scan|http_enumeration|data_exfiltration|multiple|unknown",', '"target": "specific IP or
+          multiple_targets",', '"severity": "low|medium|high|critical",', '"confidence": "low|medium|high"', '},', '"evidence":
+          ["specific finding 1", "specific finding 2", ...],', '"recommendations": ["action 1", "action 2", ...],', '"intelligence":
+          {"total_packets": N, "unique_ips": N, "threat_count": N}', '}', 'CRITICAL: Always start with read_pcap_summary,
+          then run detection tools based on what you find!']
+  agent.build_tpot_agent:
+    type: factory
+    models: [gpt-4.1-mini]
+    mcp: [tpot_mcp_server]
+    params:
+      function: build_tpot_agent
+      name: TPotAgent
+      instructions: [You are a honeypot orchestration subagent for a T-Pot deployment., 'You have access to tools from TPotComposeServer:',
+        '- `list_honeypots(compose_path=None)`', Return the honeypot services discovered in the compose file., '- `start_honeypots(services=None,
+          port_overrides=None, compose_path=None)`', 'Start one or more honeypot services. If `services` is omitted or empty,',
+        all honeypot services in the compose file are started. Optional, '`port_overrides` can be provided as strings like
+          ''2222:22''.', '- `stop_honeypots(services=None, compose_path=None)`', 'Stop one or more honeypot services. If `services`
+          is omitted or empty,', all honeypot services in the compose file are stopped., You are called by an orchestrator
+          agent (or via the CLI) that provides you, 'with the following parameters inside the task text:', '- `action`: one
+          of `list`, `start`, or `stop`.', '- `services`: optional comma- or space-separated list of honeypot names.', '-
+          `compose_path`: optional path to the docker-compose file; if omitted,', use the default provided by the server.,
+        '- `port_overrides`: optional comma- or newline-separated port override', 'strings, such as `2222:22`.', 'Your job:',
+        1) Parse the input message to identify the `action` and any optional, '`services`, `compose_path`, and `port_overrides`
+          parameters.', '2) If `action` is `list`, call `list_honeypots(...)` exactly once.', '3) If `action` is `start`,
+          call `start_honeypots(...)` exactly once with', the parsed services (or None) and port overrides (or None)., '4)
+          If `action` is `stop`, call `stop_honeypots(...)` exactly once with', the parsed services (or None)., 'When constructing
+          tool arguments:', '- If no services are specified, pass `services=None` so the server can', apply the default of
+          'all honeypots'., '- If no port overrides are specified, pass `port_overrides=None`.', '- If no compose path is
+          specified, pass `compose_path=None`.', Do not ask follow-up questions. Do not attempt to manipulate docker or, compose
+          files directly; always delegate to the provided tools., 'After the tool call completes, synthesize the JSON result
+          into a concise', 'final summary describing:', '- which compose file was used,', '- which honeypot services were
+          listed/started/stopped, and', '- any port overrides that were applied (for start operations),', plus any relevant
+          status messages from the tool responses.]
+  agent.get_agent:
+    type: factory
+    models: [gpt-4o-mini]
+    mcp: [log_reader_server, deception_server]
+    params:
+      function: get_agent
+      name: DeceptionAgent
+      instructions: [self._get_instructions()]
+  agent.run_attack_loop:
+    type: factory
+    models: [cfg.model]
+    mcp: [kali_server]
+    params:
+      function: run_attack_loop
+      name: spec.name
+      instructions: [spec.prompt_file.read_text.strip()]
+  orchestrator_agent.0:
+    type: instance
+    models: [gpt-4.1-mini]
+    tools: [recon_tool, honeypot_tool]
+    params:
+      function: build_reactive_defense_orchestrator
+      name: ReactiveDefenseOrchestrator
+      instance: orchestrator_agent
+      instructions: [You are the Reactive Defense Orchestrator for a running web application., Your job is to react to ongoing
+          or recent attacks by deciding a general, 'strategy for honeypot deployment (e.g., scale up, scale down, or maintain',
+        coverage) and then delegating the concrete implementation details to a, honeypot management agent., 'You do NOT change
+          the application code; you only:', '- Decide whether to spin up more honeypots, spin some down, or leave the', current
+          deployment unchanged., '- Derive and pass detailed context about current attack patterns (including', which ports
+          and protocols are being probed/attacked and how intensely)., '- Communicate this strategy and context to the honeypot
+          agent, which is', solely responsible for selecting specific honeypot services and port, mappings., 'You have access
+          to two subagent tools:', '1) A recon / monitoring subagent tool:', '- `check_attack_activity(...)`:', 'This tool
+          runs a dedicated ReconAgent that inspects telemetry, logs, and', other signals to determine whether the web app
+          is currently under attack, or has seen suspicious activity recently. Treat its output as the source, 'of truth for
+          at least the following:', '* Whether there is an active or recent attack.', '* Which protocols or ports are being
+          targeted (for example, TCP/22,', 'TCP/80, TCP/443, TCP/3389, etc.).', '* Any severity, frequency, or confidence
+          indicators it provides.', Pass a single text input that briefly describes the time window and, 'environment you
+          care about (for example, ''last 5 minutes, production web', app + T-Pot deployment under the given defense_root').,
+        '2) A honeypot orchestration subagent tool:', '- `run_reactive_honeypots(strategy_text)`:', This tool runs a dedicated
+          TPotAgent that manages T-Pot honeypot services, via docker-compose and related mechanisms., 'IMPORTANT: You do NOT
+          know which honeypots are available and you MUST', NOT try to specify specific honeypot service names. The honeypot
+          agent is, 'responsible for listing available honeypots, choosing which particular', 'ones to run, and deciding which
+          ports they should listen on.', 'You MAY, however, pass concrete information about what ports and', 'protocols are
+          currently being probed/attacked, and which ports you think', 'may be probed next, as part of the context the honeypot
+          agent should', consider. The honeypot agent can then decide whether to bind honeypots on, those ports or related
+          ports., 'You pass a single text argument describing at least:', '- A high-level strategy, such as:', '* ''scale_up''
+          (spin up more honeypots or broaden coverage),', '* ''scale_down'' (reduce honeypots to save resources), or', '*
+          ''maintain'' (keep the current deployment largely unchanged).', '- A concise summary of the recon findings:', '*
+          Whether attacks are present or not.', '* Which protocols/ports/traffic types are most active or risky.', '* Any
+          trend or severity information.', '- An explicit section listing the ports that are currently being', 'probed/attacked,
+          and optionally a small set of ports that you believe', 'may be probed next, for example:', 'observed_attack_ports:
+          22, 80, 443', 'likely_next_ports: 8080, 8443', '- Any resource or policy constraints (for example, ''keep total',
+        'honeypots <= 3'', ''prioritize SSH and HTTP-like traffic'', ''avoid', 'binding directly on production ports if possible'',
+          etc.).', '- Any preferred focus areas (for example, ''increase coverage for SSH-', and HTTP-like services that mimic
+          a typical Linux web stack')., 'The honeypot agent will then:', '- Inspect what honeypot services are available.',
+        '- Decide which specific honeypots to start/stop.', '- Choose appropriate ports and any docker-compose details, guided
+          by', the ports and strategy you provided., 'Your responsibilities when you are invoked:', 1) Always begin by calling
+          the recon tool `check_attack_activity` exactly, once. Ask it to analyze attack and probe activity over a short recent,
+        'time window (for example, the last 5–10 minutes) for the deployment', associated with the given defense_root., '2)
+          Carefully analyze the recon output to determine:', '- Whether there is an active or recent attack.', '- Which services,
+          protocols, or ports are being targeted.', '- Whether the attack intensity is increasing, decreasing, or stable.',
+        '- A small set of ''observed_attack_ports'' and, when possible, a small set', 'of ''likely_next_ports'' that might
+          be probed soon (for example, common', alternate HTTP/HTTPS ports like 8080 or 8443 if 80/443 are under, active scanning).,
+        '3) Based on this analysis, choose a high-level honeypot strategy, such as:', '- ''scale_up'' when there is clear
+          or increasing attack activity and', additional honeypot coverage is warranted., '- ''scale_down'' when there is
+          little or no attack activity and resources', could be conserved., '- ''maintain'' when the current deployment appears
+          adequate for the', observed level and type of attacks., You may express more nuanced strategies in natural language
+          (for, 'example, ''scale up SSH- and HTTP-like coverage slightly, but do not', increase the total honeypots beyond
+          3')., 4) Call the `run_reactive_honeypots` tool exactly once with a single text, 'argument that includes:', '- The
+          chosen strategy label (e.g., ''strategy: scale_up'').', '- A concise but detailed summary of the recon findings.',
+        '- An explicit list of observed attack ports and likely next ports, using', 'clearly labeled lines such as:', 'observed_attack_ports:
+          22, 80, 443', 'likely_next_ports: 8080, 8443', '- Any constraints or preferences (for example, limits on the total',
+        number of honeypots or guidance about which traffic types to focus on)., '- Explicit instructions that the honeypot
+          agent must decide which', specific honeypots to start/stop and exactly how to bind them to, 'ports, using the provided
+          port information as guidance rather than', strict requirements., You must NOT list specific honeypot service names.
+          You also must NOT, 'require exact port bindings, but you should provide the observed and', likely target ports so
+          the honeypot agent can make informed choices., '5) In your final answer, clearly summarize:', '- What recon information
+          you observed (including whether an attack is', present and what it targets)., '- Which high-level strategy you chose
+          (e.g., scale up / scale down /', maintain) and why., '- The observed attack ports and likely next ports you passed
+          to the', honeypot agent., '- What you instructed the honeypot agent to do in general terms', '(for example, ''increase
+          coverage for SSH and HTTP-like services on or', near the observed ports while keeping total honeypots modest').,
+        'Important rules:', '- Do not attempt to modify application code, application configuration, or', deployment details
+          directly; your only lever is high-level honeypot, strategy and detailed context (including ports) for the honeypot
+          agent., '- Always call the recon tool once at the beginning before deciding on a', honeypot strategy., '- Always
+          call the honeypot tool exactly once, providing a high-level', 'strategy and rich context (including observed and
+          likely ports), but', never concrete honeypot service names or mandated port bindings., '- Do not ask follow-up questions;
+          assume any paths or context you are given', in the initial task description are correct.]
+  orchestrator_agent.1:
+    type: instance
+    models: [gpt-4.1-mini]
+    tools: [obfuscation_tool, honeypot_tool]
+    mcp: [filesystem_server.0, node_runner_server.0]
+    params:
+      function: build_defense_orchestrator
+      name: DefenseSetupAgent
+      instance: orchestrator_agent
+      instructions: [You are the Defense Setup Orchestrator for a source code repository., 'You coordinate a set of specialized
+          defense tools that each apply a particular defense mechanism (e.g., code obfuscation, honeypots, hardening steps).',
+        'You have access to:', '1) A code obfuscation subagent tool:', '- `obfuscate_web_app(source_dir, output_dir, ...)`:',
+        'This tool runs a dedicated ObfuscationAgent that knows how to:', '- Obfuscate JavaScript (.js/.jsx) files using an
+          MCP server.', '- Minify HTML (.html/.htm/.ejs) files.', '- Minify CSS (.css) files.', It expects to receive a single
+          text input that clearly specifies, '`source_dir` and `output_dir` (usually as lines like', '`source_dir: ...` and
+          `output_dir: ...`).', '2) A honeypot orchestration subagent tool:', '- `run_initial_honeypots(action, services,
+          compose_path, port_overrides, ...)`:', This tool runs a dedicated TPotAgent that manages T-Pot honeypot, services
+          via an MCP server. It expects a single text input that, 'clearly specifies the desired action and parameters, typically
+          as', 'lines like:', 'action: start', 'services: a small, explicit list of honeypot names (no more than 3)', 'compose_path:
+          (default) or an explicit path', 'port_overrides: (none) or a comma-separated list such as 2222:22', '3) A filesystem
+          MCP server (`FilesystemServer`) that provides these tools:', '- `list_directory(path)`:', List the direct children
+          of a directory., '- `directory_tree(path, max_depth, exclude_patterns)`:', Recursively enumerate the structure under
+          a directory up to a, 'maximum depth, optionally skipping paths that match', '`exclude_patterns` (glob-style patterns
+          like ''**/node_modules/**'').', '- `search_files(root, pattern, exclude_patterns, max_results)`:', Search for files
+          under `root` whose relative path matches a, glob-style pattern such as '**/*.js'., '- `read_text_file(path, max_bytes,
+          encoding)`:', Read (at most) max_bytes of a file as text., '- `get_file_info(path)`:', Retrieve basic metadata for
+          a file or directory., Treat the filesystem MCP server as read-only in this workflow., '4) A Node runtime MCP server
+          (`NodeRunnerServer`) that provides:', '- `start_node_app(working_dir)`:', Start a Node.js application by running
+          `npm start` inside the given, directory. This is intended to start the obfuscated copy of the app, after obfuscation
+          completes., 'Your responsibilities when given a repository root and a defense_root:', 1) Use the filesystem tools
+          to scan and assess the codebase located under, 'repo_root. At a minimum, you should:', '- Inspect the top-level
+          structure via `directory_tree` or', '`list_directory`.', '- Identify key files such as `package.json`, `Dockerfile`,
+          `.env`,', or framework-specific configuration files by using `search_files`., '- Use `read_text_file` on selected
+          files (for example `package.json`,', 'main server entry points, or route definition files) to infer:', '* The frameworks
+          and libraries in use (e.g., Express, Passport,', 'Mongoose, MySQL clients, Redis, etc.).', '* Whether the app likely
+          exposes HTTP(S) APIs, authentication', 'endpoints, admin panels, or external services.', '* Whether there are hints
+          of SSH, database access, or other', networked services., '- Use `exclude_patterns` such as `**/node_modules/**`,
+          `**/dist/**`,', and `**/build/**` to avoid scanning dependency/build directories., '2) Based on this evidence, infer
+          the most relevant attack vectors for', 'the web application (e.g., HTTP/web exploitation, credential theft,', 'SSH
+          brute-force, database probing).', '3) Decide how to apply defenses to this repository. At a minimum, you', must
+          set up JavaScript/HTML/CSS obfuscation for the web application, code and start a small initial set of honeypot services
+          via T-Pot., '4) Construct a clear plan for obfuscation that specifies:', '- source_dir: the path within the repo
+          that should be obfuscated', '- output_dir: where obfuscated/minified artifacts should be written', '5) Call the
+          `obfuscate_web_app` tool exactly once, with a single string', 'argument that includes:', '- `source_dir: <absolute
+          path>`', '- `output_dir: <absolute path>`', and a short explanation that the tool should fully obfuscate and, minify
+          the web app assets., 6) Based on your evidence-based assessment of the codebase and its, 'likely attack surface,
+          select a small, targeted subset of honeypot', services that best match those attack vectors. You must not start
+          all, 'available honeypots, and you must limit the initial deployment to no', more than 3 honeypots to avoid excessive
+          bandwidth and resource usage., '7) Call the `run_initial_honeypots` tool exactly once, with a single', 'string argument
+          that clearly indicates you want to:', '- `action: start`', '- `services: <a concise list of the selected honeypot
+          names>`', '- `compose_path: (default)` unless there is a clear reason to use a', different path, '- `port_overrides:
+          (none)` unless you identify a clear need for custom', port bindings, 'The input should also explain, briefly, why
+          these specific honeypots', were chosen given the observed codebase., '8) After obfuscation has completed successfully,
+          start the obfuscated', application by calling the `start_node_app` MCP tool exactly once., Pass `working_dir` as
+          the absolute path of the obfuscated output, directory so that `npm start` runs against the obfuscated app., 9) After
+          the obfuscated app has been started and the honeypots have been, 'launched, summarize what defenses were applied,
+          where the outputs were', 'written, which honeypots were started (and why they were chosen), and', confirm that the
+          obfuscated app was started along with any next steps, for additional defenses., 'Important rules:', '- Always perform
+          at least one obfuscation pass using `obfuscate_web_app`.', '- Always perform at least one honeypot start operation
+          using', '`run_initial_honeypots`.', '- After obfuscation, always start the obfuscated app once using the', '`start_node_app`
+          MCP tool with `working_dir` set to the obfuscated', output directory., '- Never start the entire set of honeypots;
+          restrict the initial deployment', 'to a small, well-justified subset (no more than 3 honeypots) that aligns', with
+          the likely attack surface of the application., '- Only use the filesystem MCP tools for reading/listing/searching;
+          do not', modify files., '- Do not attempt to call lower-level MCP tools directly; instead, rely on', the `obfuscate_web_app`
+          and `run_initial_honeypots` tools to run their, 'internal subagents, the filesystem MCP tools for inspection, and
+          the', '`start_node_app` tool from the Node runtime MCP server to start the', obfuscated app., '- Do not ask follow-up
+          questions; assume the repository structure and paths', provided are correct., '- Your final answer should be a clear,
+          concise description of what you did,', 'what honeypots were started and why, where the results live on disk, and',
+        that the obfuscated app was started (including which directory it was, run from).]
+
+models:
+  cfg.model:
+    type: variable
+    agents: [agent.run_attack_loop]
+  gpt-4.1-mini:
+    type: literal
+    agents: [agent.build_tpot_agent, agent.build_obfuscation_agent, orchestrator_agent.0, orchestrator_agent.1]
+  gpt-4o-mini:
+    type: literal
+    agents: [agent.get_agent, agent.build_recon_agent_pcap, agent]
+
+tools:
+  honeypot_tool:
+    type: variable
+    agents: [orchestrator_agent.0, orchestrator_agent.1]
+    params:
+      dynamic: "True"
+  obfuscation_tool:
+    type: variable
+    agents: [orchestrator_agent.1]
+    params:
+      dynamic: "True"
+  recon_tool:
+    type: variable
+    agents: [orchestrator_agent.0]
+    params:
+      dynamic: "True"
+
+mcp:
+  deception_server:
+    type: process
+    agents: [agent.get_agent]
+    params:
+      class: MCPServerStdio
+      name: DeceptionResponseServer
+      command: python
+      args: [str(deception_mcp_path)]
+      cache_tools_list: "True"
+  filesystem_server.0:
+    type: process
+    agents: [orchestrator_agent.1]
+    params:
+      dynamic: "True"
+      instance: filesystem_server
+  filesystem_server.1:
+    type: process
+    params:
+      class: MCPServerStdio
+      name: FilesystemServer
+      command: python
+      args: [filesystem_server_script]
+      cache_tools_list: "True"
+      client_session_timeout_seconds: "600.0"
+      instance: filesystem_server
+      function: main
+  kali_server:
+    type: process
+    agents: [agent.run_attack_loop]
+    params:
+      dynamic: "True"
+  log_reader_mcp_server:
+    type: process
+    agents: [agent]
+    params:
+      class: MCPServerStdio
+      name: NetworkLogReaderServer
+      command: python_executable
+      args: [str(mcp_server_abs_path)]
+      cache_tools_list: "True"
+      client_session_timeout_seconds: "300.0"
+  log_reader_server:
+    type: process
+    agents: [agent.get_agent]
+    params:
+      class: MCPServerStdio
+      name: NetworkLogReaderServer
+      command: python
+      args: [str(log_reader_path)]
+      cache_tools_list: "True"
+  node_runner_server.0:
+    type: process
+    agents: [orchestrator_agent.1]
+    params:
+      dynamic: "True"
+      instance: node_runner_server
+  node_runner_server.1:
+    type: process
+    params:
+      class: MCPServerStdio
+      name: NodeRunnerServer
+      command: python
+      args: [node_runner_server_script]
+      cache_tools_list: "True"
+      client_session_timeout_seconds: "600.0"
+      instance: node_runner_server
+      function: main
+  obfuscation_mcp_server:
+    type: process
+    agents: [agent.build_obfuscation_agent]
+    params:
+      dynamic: "True"
+  pcap_analysis_mcp_server:
+    type: process
+    agents: [agent.build_recon_agent_pcap]
+    params:
+      dynamic: "True"
+  tpot_mcp_server:
+    type: process
+    agents: [agent.build_tpot_agent]
+    params:
+      dynamic: "True"
+
+imports:
+  AbstractNode: execution_tree.AbstractNode
+  Action: schemas.Action
+  ActiveDefenseTracker: telemetry.ActiveDefenseTracker
+  Agent: agents.Agent
+  annotations: __future__.annotations
+  Any: typing.Any
+  argparse: argparse
+  asyncio: asyncio
+  AttackMemory: memory.AttackMemory
+  AttackOrchestrator: agents.orchestrator.AttackOrchestrator
+  BaseModel: pydantic.BaseModel
+  build_recon_agent_pcap: recon_agent_pcap.build_recon_agent_pcap
+  coerce_action: schemas.coerce_action
+  Console: rich.console.Console
+  CORSMiddleware: fastapi.middleware.cors.CORSMiddleware
+  dataclass: dataclasses.dataclass
+  datetime: datetime.datetime
+  dedent: textwrap.dedent
+  deepcopy: copy.deepcopy
+  default_memory: schemas.default_memory
+  deque: collections.deque
+  Dict: typing.Dict
+  error: urllib.error
+  EventRouter: event_router.EventRouter
+  execute: utils.http_executor.execute
+  ExecutionNode: execution_tree.ExecutionNode
+  FastAPI: fastapi.FastAPI
+  FastMCP: mcp.server.fastmcp.FastMCP
+  field: dataclasses.field
+  Field: pydantic.Field
+  FileResponse: fastapi.responses.FileResponse
+  fnmatch: fnmatch.fnmatch
+  Fore: colorama.Fore
+  futures: concurrent.futures
+  HoneypotAssessment: agents.orchestrator.HoneypotAssessment
+  HoneypotMonitor: agents.orchestrator.HoneypotMonitor
+  HTTPException: fastapi.HTTPException
+  init: colorama.init
+  Iterable: typing.Iterable
+  json: json
+  JSONResponse: fastapi.responses.JSONResponse
+  KaliMCPConfig: session.KaliMCPConfig
+  KaliMCPSession: session.KaliMCPSession
+  List: typing.List
+  load_dotenv: dotenv.load_dotenv
+  logging: logging
+  manager: websocket_server.manager
+  MCPServerStdio: agents.mcp.MCPServerStdio
+  ObfuscationAgentContext: defense.obfuscation_agent.obfuscation_agent.ObfuscationAgentContext
+  OpenAI: openai.OpenAI
+  Optional: typing.Optional
+  os: os
+  paramiko: paramiko
+  parse: urllib.parse
+  parse_qsl: urllib.parse.parse_qsl
+  Path: pathlib.Path
+  perceive: agents.perception.perceive
+  PlannerVisitor: planner.planner_visitor.PlannerVisitor
+  PrinterObserver: observer.printer_observer.PrinterObserver
+  PrinterVisitor: printer.printer_visitor.PrinterVisitor
+  Query: fastapi.Query
+  random: random
+  re: re
+  ReAct: react.react.ReAct
+  recon_agent: recon_agent.recon_agent
+  ReconAgentPcap: recon_agent_pcap.ReconAgentPcap
+  ReconAgentPcapContext: recon_agent_pcap.ReconAgentPcapContext
+  RedTeamAgent: redteamagent.RedTeamAgent
+  request: urllib.request
+  requests: requests
+  RunHooks: agents.RunHooks
+  Runner: agents.Runner
+  scan_repository: codebase_scanner.scan_repository
+  secrets: secrets
+  Sequence: typing.Sequence
+  Set: typing.Set
+  set_default_openai_api: agents.set_default_openai_api
+  set_tracing_disabled: agents.set_tracing_disabled
+  shlex: shlex
+  SignalHeatmapTracker: telemetry.SignalHeatmapTracker
+  socket: socket
+  string: string
+  Style: colorama.Style
+  subprocess: subprocess
+  sys: sys
+  time: time
+  ToolLoggingHooks: defense.initial_defense_orchestrator.tool_logging_hooks.ToolLoggingHooks
+  TPotAgentContext: defense.tarpit_boxes.tpot_agent.TPotAgentContext
+  Tuple: typing.Tuple
+  update_memory: agents.world_model.update_memory
+  urljoin: urllib.parse.urljoin
+  urlparse: urllib.parse.urlparse
+  UTC: datetime.UTC
+  uvicorn: uvicorn
+  ws_router: websocket_server.router
+  yaml: yaml
+
+functions:
+  __aenter__:
+    type: async
+    module: defense.obfuscation_agent.obfuscation_agent
+    args: [self]
+    params:
+      returns: Agent
+  __aexit__:
+    type: async
+    module: defense.obfuscation_agent.obfuscation_agent
+    args: [self, exc_type, exc, tb]
+    params:
+      returns: None
+  __init__:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, working_dir]
+    params:
+      returns: None
+  __post_init__:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: None
+  _attempt_ssh:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [host, port, username, password, timeout]
+    params:
+      returns: None
+  _build_http_prompt:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [display_url, extra_tasking, alias_note]
+    params:
+      returns: str
+  _build_next_steps:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, attack_count]
+    params:
+      returns: List[str]
+  _build_recommendations:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, attack_counts]
+    params:
+      returns: List[str]
+  _build_task:
+    type: sync
+    module: attacker2.agent_attack
+    args: [step, cfg, memory, specialist]
+    params:
+      returns: str
+  _candidate_targets:
+    type: sync
+    module: attacker.agents.planner
+    args: [memory]
+    params:
+      returns: List[str]
+  _collect_output_text:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [result]
+    params:
+      returns: str
+  _color_status:
+    type: sync
+    module: attacker.agent_attack
+    args: [status]
+    params:
+      returns: str
+  _create_default_state:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self]
+    params:
+      returns: Dict
+  _default_port:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [server_url]
+    params:
+      returns: int
+  _default_state:
+    type: sync
+    module: attacker2.memory
+    params:
+      returns: Dict
+  _enforce_strategy:
+    type: sync
+    module: attacker.agents.planner
+    args: [action, memory]
+    params:
+      returns: Action
+  _ensure_structure:
+    type: sync
+    module: attacker2.memory
+    args: [self]
+    params:
+      returns: None
+  _env_bool:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [name, default]
+    params:
+      returns: bool
+  _env_list:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [name]
+    params:
+      returns: List[str]
+  _execute:
+    type: sync
+    module: defense.orchestrator.orchestrator
+  _execute_http_requests:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, requests_to_run]
+    params:
+      returns: tuple
+  _execute_ssh_noise:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg]
+    params:
+      returns: tuple
+  _fallback_action:
+    type: sync
+    module: attacker.agents.planner
+    args: [memory]
+    params:
+      returns: Action
+  _file_info_for_path:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path]
+    params:
+      returns: FileInfo
+  _format_snippet:
+    type: sync
+    module: attacker.agent_attack
+    args: [body, limit]
+    params:
+      returns: str
+  _generate_http_noise:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [base_url, total_requests, concurrency, timeout]
+    params:
+      returns: None
+  _get_instructions:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self]
+    params:
+      returns: str
+  _get_timestamp:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self]
+    params:
+      returns: str
+  _http_preflight_scenarios:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg]
+    params:
+      returns: list[Dict]
+  _infer_http_method:
+    type: sync
+    module: attacker2.agent_attack
+    args: [entry]
+    params:
+      returns: str
+  _inspect_entries:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, entries]
+    params:
+      returns: Tuple
+  _investigate_with_agents:
+    type: async
+    module: defense.recon_agent.recon_agent
+    args: [self, context]
+    params:
+      returns: Dict
+  _iter_payload_values:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, payload]
+    params:
+      returns: Iterable[str]
+  _launch_api_process:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: subprocess.Popen
+  _load_log_entries:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, limit]
+    params:
+      returns: Tuple
+  _load_or_create_state:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self]
+    params:
+      returns: None
+  _local_log_analysis:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, context, reason]
+    params:
+      returns: Dict
+  _log_operation:
+    type: sync
+    module: attacker2.agent_attack
+    args: [entry]
+    params:
+      returns: None
+  _match_patterns:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, patterns, values]
+    params:
+      returns: Optional[str]
+  _merge_findings:
+    type: sync
+    module: attacker2.memory
+    args: [self, findings]
+    params:
+      returns: None
+  _merge_targets:
+    type: sync
+    module: attacker2.memory
+    args: [self, targets]
+    params:
+      returns: None
+  _mirror_attack_log:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, entry, target_url]
+    params:
+      returns: None
+  _mirror_honeypot_log:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, entry]
+    params:
+      returns: None
+  _needs_variation:
+    type: sync
+    module: attacker.agents.planner
+    args: [memory, url]
+    params:
+      returns: bool
+  _noise_worker:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [base_url, timeout]
+  _normalize_url:
+    type: sync
+    module: attacker.agents.planner
+    args: [url]
+    params:
+      returns: str
+  _parse_json_block:
+    type: sync
+    module: attacker.agents.world_model
+    args: [text]
+    params:
+      returns: Dict
+  _path_matches_any:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path, patterns]
+    params:
+      returns: bool
+  _persist_state:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self]
+    params:
+      returns: None
+  _port_open:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self, host, port]
+    params:
+      returns: bool
+  _post_attack_event:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, entry, specialist, target_url]
+    params:
+      returns: None
+  _print_step:
+    type: sync
+    module: attacker2.agent_attack
+    args: [entry]
+    params:
+      returns: None
+  _random_api_key:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    params:
+      returns: str
+  _random_db_name:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    params:
+      returns: str
+  _random_hex:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    args: [length]
+    params:
+      returns: str
+  _random_ip:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    params:
+      returns: str
+  _random_password:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    params:
+      returns: str
+  _random_token:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [length]
+    params:
+      returns: str
+  _random_username:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    params:
+      returns: str
+  _record_manual_entry:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, memory, step]
+    params:
+      returns: None
+  _resolve_path:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path]
+    params:
+      returns: Path
+  _rewrite_base_url:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [base_url, alias]
+    params:
+      returns: tuple
+  _run_http_phase:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [display_url, extra_tasking, alias_note]
+    params:
+      returns: None
+  _run_http_preflight:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, memory, next_step]
+    params:
+      returns: int
+  _run_manual_preflight:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, memory, next_step]
+    params:
+      returns: int
+  _run_scripted_http_commands:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [base_url, dry_run]
+    params:
+      returns: None
+  _run_ssh_phase:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [host, port, username, passwords, cycles, delay, timeout]
+    params:
+      returns: None
+  _run_system_preflight:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, memory, next_step]
+    params:
+      returns: int
+  _safe_json_parse:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [blob]
+    params:
+      returns: Dict
+  _select_agent:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [self, memory, last_perception, honeypot_state]
+    params:
+      returns: Tuple
+  _synthesize_minimum_findings:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, entries, evidence, attack_counts, suspicious_endpoints, total_requests]
+    params:
+      returns: Tuple
+  _system_preflight_scenarios:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg]
+    params:
+      returns: list[Dict]
+  _target_for_channel:
+    type: sync
+    module: attacker2.agent_attack
+    args: [cfg, channel]
+    params:
+      returns: str
+  _terminate_api_process:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: None
+  _wait_for_api:
+    type: async
+    module: attacker2.kali_mcp.session
+    args: [self, timeout]
+    params:
+      returns: None
+  analyze_and_deceive:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self, context]
+    params:
+      returns: Dict
+  analyze_and_deceive_async:
+    type: async
+    module: defense.deception_agent.deception_agent
+    args: [self, context]
+    params:
+      returns: Dict
+  append_defense_event:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [record]
+    params:
+      returns: None
+  append_event_log:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [record]
+    params:
+      returns: None
+  arm_honeypots:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [payload]
+  attack_log:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [limit]
+    params:
+      returns: Dict
+  banner:
+    type: sync
+    module: attacker.agent_attack
+    params:
+      returns: None
+  bootstrap:
+    type: async
+    module: defense.orchestrator.orchestrator
+    params:
+      returns: None
+  build_api_args:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: List[str]
+  build_client_args:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: List[str]
+  build_defense_orchestrator:
+    type: sync
+    module: defense.initial_defense_orchestrator.initial_defense_orchestrator
+    args: [obfuscation_tool, honeypot_tool, filesystem_server, node_runner_server]
+    params:
+      returns: Agent
+  build_obfuscation_agent:
+    type: sync
+    module: defense.obfuscation_agent.obfuscation_agent
+    args: [obfuscation_mcp_server]
+    params:
+      returns: Agent
+  build_reactive_defense_orchestrator:
+    type: sync
+    module: defense.reactive_defense_orchestrator.reactive_defense_orchestrator
+    args: [recon_tool, honeypot_tool]
+    params:
+      returns: Agent
+  build_recon_agent_pcap:
+    type: sync
+    module: defense.recon_agent_pcap.recon_agent_pcap
+    args: [pcap_analysis_mcp_server]
+    params:
+      returns: Agent
+  build_tpot_agent:
+    type: sync
+    module: defense.tarpit_boxes.tpot_agent
+    args: [tpot_mcp_server]
+    params:
+      returns: Agent
+  choose_action:
+    type: sync
+    module: attacker.agents.planner
+    args: [memory]
+    params:
+      returns: Dict
+  defense_scan:
+    type: async
+    module: defense.orchestrator.orchestrator
+    params:
+      returns: JSONResponse
+  directory_tree:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path, max_depth, exclude_patterns]
+    params:
+      returns: DirectoryTreeResult
+  download_latest_report:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [fmt]
+    params:
+      returns: FileResponse
+  enrich_memory:
+    type: sync
+    module: attacker.agent_attack
+    args: [memory, action, perception, status]
+    params:
+      returns: Dict
+  evaluate:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [self, raw_body, perception, status, action]
+    params:
+      returns: HoneypotAssessment
+  final_summary:
+    type: sync
+    module: attacker.agent_attack
+    args: [history, honeypot_state, termination_reason]
+    params:
+      returns: None
+  find_latest_report:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [extension]
+  generate_fake_admin_panel:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    args: [endpoint]
+    params:
+      returns: Dict
+  generate_fake_api_response:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    args: [endpoint, response_type]
+    params:
+      returns: Dict
+  generate_fake_backup:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    args: [endpoint, backup_type]
+    params:
+      returns: Dict
+  generate_fake_config:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    args: [endpoint, config_format]
+    params:
+      returns: Dict
+  generate_fake_env_file:
+    type: sync
+    module: defense.deception_agent.deception_response_mcp_server
+    args: [endpoint, include_aws]
+    params:
+      returns: Dict
+  get_agent:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self, log_reader_server, deception_server]
+    params:
+      returns: Agent
+  get_all_network_logs:
+    type: sync
+    module: defense.recon_agent.log_reader_mcp_server
+    args: [log_path, working_dir]
+    params:
+      returns: Dict
+  get_file_info:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path]
+    params:
+      returns: GetFileInfoResult
+  get_mcp_servers_async:
+    type: async
+    module: defense.deception_agent.deception_agent
+    args: [self]
+  get_state:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self]
+    params:
+      returns: Dict
+  health:
+    type: async
+    module: defense.orchestrator.orchestrator
+    params:
+      returns: Dict
+  honeypot_inventory:
+    type: async
+    module: defense.orchestrator.orchestrator
+    params:
+      returns: JSONResponse
+  investigate:
+    type: sync
+    module: defense.recon_agent.recon_agent
+    args: [self, context]
+    params:
+      returns: Dict
+  investigate_async:
+    type: async
+    module: defense.recon_agent.recon_agent
+    args: [self, context]
+    params:
+      returns: Dict
+  list_directory:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path]
+    params:
+      returns: ListDirectoryResult
+  load:
+    type: sync
+    module: attacker2.memory
+    args: [cls, path]
+    params:
+      returns: AttackMemory
+  load_attack_log:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [limit]
+    params:
+      returns: List[Dict]
+  load_defense_events:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [limit]
+    params:
+      returns: List[Dict]
+  load_memory:
+    type: sync
+    module: attacker.agent_attack
+    params:
+      returns: Dict
+  load_recent_events:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [limit]
+    params:
+      returns: List[Dict]
+  main:
+    type: async
+    module: defense.initial_defense_orchestrator.initial_defense_orchestrator
+    params:
+      returns: None
+  on_tool_end:
+    type: async
+    module: defense.initial_defense_orchestrator.tool_logging_hooks
+    args: [self, context, agent, tool, result]
+  on_tool_start:
+    type: async
+    module: defense.initial_defense_orchestrator.tool_logging_hooks
+    args: [self, context, agent, tool]
+  parse_args:
+    type: sync
+    module: attacker3.src.redteamagent.scripts.auto_attack
+    args: [argv]
+    params:
+      returns: argparse.Namespace
+  parse_cli_args:
+    type: sync
+    module: defense.tarpit_boxes.tpot_agent
+    params:
+      returns: tuple
+  perceive:
+    type: sync
+    module: attacker.agents.perception
+    args: [raw_response, status]
+    params:
+      returns: Dict
+  plan:
+    type: sync
+    module: attacker3.src.redteamagent.redteamagent
+    args: [self]
+    params:
+      returns: AbstractNode
+  plan_action:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [self, memory, last_perception, honeypot_state]
+    params:
+      returns: Tuple
+  read_network_logs:
+    type: sync
+    module: defense.recon_agent.log_reader_mcp_server
+    args: [lines, log_path, working_dir]
+    params:
+      returns: Dict
+  read_text_file:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [path, max_bytes, encoding]
+    params:
+      returns: ReadTextFileResult
+  receive_attack_event:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [event]
+  record_step:
+    type: sync
+    module: attacker2.memory
+    args: [self, step, task, output, channel]
+    params:
+      returns: Dict
+  render_context:
+    type: sync
+    module: attacker2.memory
+    args: [self, limit]
+    params:
+      returns: str
+  require_args:
+    type: sync
+    module: defense.initial_defense_orchestrator.initial_defense_orchestrator
+    params:
+      returns: tuple
+  reset_state:
+    type: sync
+    module: defense.deception_agent.deception_agent
+    args: [self]
+    params:
+      returns: None
+  run:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [self, client, memory, context]
+    params:
+      returns: Tuple
+  run_attack_loop:
+    type: async
+    module: attacker2.agent_attack
+    params:
+      returns: None
+  run_recon:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [request]
+  sanitize_payload:
+    type: sync
+    module: defense.orchestrator.orchestrator
+    args: [payload]
+    params:
+      returns: Dict
+  save:
+    type: sync
+    module: attacker2.memory
+    args: [self]
+    params:
+      returns: None
+  save_memory:
+    type: sync
+    module: attacker.agent_attack
+    args: [memory]
+    params:
+      returns: None
+  search_files:
+    type: sync
+    module: defense.initial_defense_orchestrator.filesystem_mcp_server
+    args: [root, pattern, exclude_patterns, max_results]
+    params:
+      returns: SearchFilesResult
+  socket_target:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: Tuple
+  start_node_app:
+    type: sync
+    module: defense.initial_defense_orchestrator.node_runner_mcp_server
+    args: [working_dir]
+    params:
+      returns: str
+  state:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [self]
+    params:
+      returns: HoneypotAssessment
+  step_block:
+    type: sync
+    module: attacker.agent_attack
+    args: [step, action, status, summary, next_goals, active_goals, perception, body_snippet, orchestration_meta, honeypot_state]
+    params:
+      returns: None
+  summary:
+    type: sync
+    module: attacker2.kali_mcp.session
+    args: [self]
+    params:
+      returns: Dict
+  telemetry_snapshot:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [limit]
+    params:
+      returns: Dict
+  timeline:
+    type: async
+    module: defense.orchestrator.orchestrator
+    args: [limit]
+    params:
+      returns: Dict
+  to_payload:
+    type: sync
+    module: attacker.agents.orchestrator
+    args: [self]
+    params:
+      returns: Dict
+  update_memory:
+    type: sync
+    module: attacker.agents.world_model
+    args: [memory, perception, last_action, last_status]
+    params:
+      returns: Dict
+
+variables:
+  ATTACKER2_ATTACK_LOG_IP:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_ATTACK_LOG_PATH:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_DEFENSE_API:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_DEFENSE_TIMEOUT:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_HONEYPOT_LOG_PATH:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_MAX_STEPS:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_MIRROR_ATTACK_LOG:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_MIRROR_HONEYPOT_LOG:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_MODEL:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_PREFLIGHT_HTTP_EVENTS:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_PREFLIGHT_SSH_EVENTS:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_PREFLIGHT_SSH_HANDSHAKES:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_SYSTEM_HOST:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_SYSTEM_PORT:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  ATTACKER2_TARGET_BASE:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.agent_attack]
+  DEFENSE_DASHBOARD_ORIGINS:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [defense.orchestrator.orchestrator]
+  DEFENSE_ORCHESTRATOR_PORT:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [defense.orchestrator.orchestrator]
+  KALI_MCP_API_COMMAND:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  KALI_MCP_API_PORT:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  KALI_MCP_CLIENT_COMMAND:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  KALI_MCP_CLIENT_TIMEOUT:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  KALI_MCP_SERVER_URL:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  KALI_MCP_SESSION_NAME:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  name:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker2.kali_mcp.session]
+  OPENAI_API_KEY:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [defense.recon_agent.recon_agent]
+  OPENAI_ATTACK_MODEL:
+    type: env
+    params:
+      caller: [os.getenv]
+      path: [attacker.agent_attack, attacker.agents.world_model, attacker2.agent_attack, attacker.agents.planner, attacker.agents.perception,
+        attacker.agents.orchestrator]
+
+files:
+  ./:
+    type: pattern
+    actions: [read]
+    params:
+      patterns: ['incident_report_*.{extension}', '*']
+      caller: [find_latest_report, search_files]
+  attack_log.json:
+    type: literal
+    actions: [read]
+    params:
+      caller: [read_network_logs, get_all_network_logs, _load_log_entries]
+  ATTACKER2_ATTACK_LOG_PATH:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path]
+  ATTACKER2_HONEYPOT_LOG_PATH:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path]
+  attacker_events.jsonl:
+    type: literal
+    actions: [read]
+    params:
+      path: [STATE_DIR]
+  base_dir:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path.expanduser.resolve()]
+  current_path:
+    type: literal
+    actions: [read]
+    params:
+      caller: [Path(current_root)]
+  deception_response_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [analyze_and_deceive_async, get_mcp_servers_async]
+      path: [Path.parent]
+  deception_state.json:
+    type: literal
+    actions: [read]
+    params:
+      caller: [__init__]
+      path: [self.state_dir]
+  defense_events.jsonl:
+    type: literal
+    actions: [read]
+    params:
+      path: [STATE_DIR]
+  dir_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [dir_path.iterdir]
+  file_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [open]
+      alias: [f]
+  filesystem_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      path: [base_dir]
+  kali_mcp_system.md:
+    type: literal
+    actions: [read]
+    params:
+      path: [PROMPT_DIR]
+  kali_mcp_web.md:
+    type: literal
+    actions: [read]
+    params:
+      path: [PROMPT_DIR]
+  latest_recon_report.json:
+    type: literal
+    actions: [read]
+    params:
+      caller: [run_recon]
+      path: [REPORT_DIR]
+  log_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path]
+  log_reader_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [analyze_and_deceive_async, get_mcp_servers_async, _investigate_with_agents]
+      path: [Path.parent.parent]
+  memory.json:
+    type: literal
+    actions: [read]
+    params:
+      path: [Path.resolve.parent]
+  MEMORY_PATH:
+    type: variable
+    actions: [read, write]
+    params:
+      caller: [open, json.load, MEMORY_PATH.parent.mkdir, AttackMemory.load]
+      alias: [fh]
+  node_runner_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      path: [base_dir]
+  obfuscation_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [os.path.join]
+  operations.jsonl:
+    type: literal
+    actions: [read]
+    params:
+      path: [Path.resolve.parent]
+  path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [path.read_text, Path]
+  pcap_analysis_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [os.path.join]
+  PROMPT_PATH:
+    type: variable
+    actions: [read]
+    params:
+      caller: [PROMPT_PATH.read_text]
+  recon_path:
+    type: variable
+    actions: [write]
+    params:
+      caller: [recon_path.write_text]
+  REPORT_DIR:
+    type: variable
+    actions: [write, read]
+    params:
+      caller: [REPORT_DIR.mkdir, REPORT_DIR.glob]
+  root_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [root_path.rglob]
+  ssh_commands.log:
+    type: literal
+    actions: [read]
+  STATE_DIR:
+    type: variable
+    actions: [write]
+    params:
+      caller: [STATE_DIR.mkdir]
+  system_orchestrator.txt:
+    type: literal
+    actions: [read]
+    params:
+      caller: [__init__]
+      path: [PROMPTS_DIR]
+  system_perception.txt:
+    type: literal
+    actions: [read]
+  system_planner.txt:
+    type: literal
+    actions: [read]
+  system_world_model.txt:
+    type: literal
+    actions: [read]
+  tpot_mcp_server.py:
+    type: literal
+    actions: [read]
+    params:
+      caller: [os.path.join]
+  working_dir:
+    type: variable
+    actions: [read]
+    params:
+      caller: [Path.cwd(), os.path.isdir, Path]
+
+processes:
+  npm:
+    type: shell
+    actions: [exec]
+    args: [[start]]
+    params:
+      caller: [subprocess.Popen]
+      shell: ["False"]
+
+networks:
+  api_gateway:
+    type: api
+    actions: [GET]
+    protocols: [https]
+    params:
+      pattern: https://api-{random.randint}.internal.company.local
+      caller: [generate_fake_config]
+  payment_processor:
+    type: api
+    actions: [GET]
+    protocols: [https]
+    params:
+      pattern: https://payments-{random.randint}.internal.company.local
+      caller: [generate_fake_config]
+  sentry_dsn:
+    type: api
+    actions: [GET]
+    protocols: [https]
+    params:
+      pattern: https://{_random_hex}@sentry.io/123456
+      caller: [generate_fake_config]
+  ssh_connection:
+    type: api
+    actions: [connect]
+    protocols: [ssh]
+    ports: ["22"]
+    params:
+      caller: [paramiko.SSHClient]
